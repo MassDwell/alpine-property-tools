@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Alpine Property Group Toolkit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Black, White, Grey Color Palette */
+      --black: #000000;
+      --grey-900: #1A1A1A;
+      --grey-800: #2D3748;
+      --grey-700: #4A5568;
+      --grey-600: #64748B;
+      --grey-500: #94A3B8;
+      --grey-400: #CBD5E1;
+      --grey-300: #E2E8F0;
+      --grey-200: #F1F3F5;
+      --grey-100: #F7F8FA;
+      --grey-50: #FAFAFA;
+      --white: #FFFFFF;
+      
+      --danger: #DC2626;
+      
+      --shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--grey-100);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .login-container {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: var(--shadow-xl);
+      width: 100%;
+      max-width: 440px;
+      overflow: hidden;
+      border: 1px solid var(--grey-300);
+    }
+
+    .login-header {
+      background: var(--grey-900);
+      padding: 40px 32px;
+      text-align: center;
+      color: var(--white);
+    }
+
+    .login-logo {
+      width: 60px;
+      height: 60px;
+      background: var(--white);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 32px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-header h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .login-header p {
+      font-size: 14px;
+      opacity: 0.9;
+      font-weight: 500;
+      color: var(--grey-400);
+    }
+
+    .login-body {
+      padding: 40px 32px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--grey-700);
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 15px;
+      border: 1px solid var(--grey-300);
+      border-radius: 8px;
+      font-family: inherit;
+      transition: all 0.2s;
+      background: var(--white);
+      color: var(--grey-900);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--black);
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+    }
+
+    input::placeholder {
+      color: var(--grey-400);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: var(--grey-900);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      font-family: inherit;
+    }
+
+    .btn-login:hover:not(:disabled) {
+      background: var(--black);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-login:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      background: #FEE2E2;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+      animation: shake 0.3s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    .login-footer {
+      background: var(--grey-50);
+      padding: 20px 32px;
+      text-align: center;
+      border-top: 1px solid var(--grey-300);
+    }
+
+    .login-footer p {
+      font-size: 13px;
+      color: var(--grey-600);
+      line-height: 1.6;
+    }
+
+    .login-footer a {
+      color: var(--grey-900);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .login-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 480px) {
+      .login-container {
+        border-radius: 0;
+      }
+
+      .login-header {
+        padding: 32px 24px;
+      }
+
+      .login-body {
+        padding: 32px 24px;
+      }
+
+      .login-footer {
+        padding: 16px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <div class="login-logo">🏔️</div>
+      <h1>Alpine Property Group</h1>
+      <p>Development Toolkit Access</p>
+    </div>
+
+    <div class="login-body">
+      <div id="errorMessage" class="error-message"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            placeholder="your.email@alpinepropertygroupllc.com"
+            autocomplete="email"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          🔐 Access Toolkit
+        </button>
+      </form>
+    </div>
+
+    <div class="login-footer">
+      <p>
+        Authorized personnel only.<br>
+        Need access? Contact <a href="mailto:steve@alpinepropertygroupllc.com">steve@alpinepropertygroupllc.com</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    // Check if already authenticated
+    if (isAuthenticated()) {
+      const redirect = sessionStorage.getItem('alpine_auth_redirect') || 'index.html';
+      sessionStorage.removeItem('alpine_auth_redirect');
+      window.location.href = redirect;
+    }
+
+    // Handle login form
+    const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const errorMessage = document.getElementById('errorMessage');
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      // Clear previous error
+      errorMessage.classList.remove('show');
+
+      // Disable button during auth
+      loginBtn.disabled = true;
+      loginBtn.textContent = '🔄 Authenticating...';
+
+      // Simulate slight delay for UX
+      setTimeout(() => {
+        const result = authenticate(email, password);
+
+        if (result.success) {
+          // Success - redirect
+          const redirect = sessionStorage.getItem('alpine_auth_redirect') || 'index.html';
+          sessionStorage.removeItem('alpine_auth_redirect');
+          window.location.href = redirect;
+        } else {
+          // Error - show message
+          errorMessage.textContent = result.error;
+          errorMessage.classList.add('show');
+          loginBtn.disabled = false;
+          loginBtn.textContent = '🔐 Access Toolkit';
+          passwordInput.value = '';
+          passwordInput.focus();
+        }
+      }, 500);
+    });
+
+    // Auto-focus email field
+    emailInput.focus();
+  </script>
+</body>
+</html>

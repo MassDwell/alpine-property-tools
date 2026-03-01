@@ -455,5 +455,11 @@
 
     ReactDOM.render(<App />, document.getElementById('root'));
   </script>
+  <!-- Authentication -->
+  <script src="auth.js"></script>
+  <script>
+    requireAuth();
+    window.addEventListener('DOMContentLoaded', () => { addLogoutButton(); });
+  </script>
 </body>
 </html>
