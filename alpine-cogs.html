@@ -3,1153 +3,596 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Budget vs Actual (COGS) | Alpine Property Group</title>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="alpine-shared.js"></script>
-  <link rel="stylesheet" href="alpine-premium.css">
+  <title>Project Budget & Cost Tracker - Alpine Property Group</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* Override colors to black/white/grey */
-    body {
-      background: #FFFFFF;
-      color: #2D3748;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    .container {
-      max-width: 1600px;
-      margin: 0 auto;
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #F7F8FA;
+      color: #2D3748;
+      line-height: 1.6;
     }
 
     .header {
       background: white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border: 1px solid #E2E8F0;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .header h1 {
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
       color: #1A1A1A;
-      background: none;
-      -webkit-text-fill-color: #1A1A1A;
     }
 
-    .project-selector {
+    .logout-btn {
+      background: #000;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .logout-btn:hover {
+      background: #2D3748;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .project-header {
       background: white;
-      padding: 20px 28px;
-      border-radius: 12px;
-      margin-bottom: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border: 1px solid #E2E8F0;
-    }
-
-    .project-selector select {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid #E2E8F0;
+      padding: 30px;
       border-radius: 8px;
-      font-size: 15px;
-      font-family: inherit;
-      transition: all 0.2s;
-      background: white;
-      color: #2D3748;
+      margin-bottom: 30px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
-    .project-selector select:focus {
-      outline: none;
-      border-color: #000000;
-      box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+    .project-header h1 {
+      font-size: 28px;
+      color: #1A1A1A;
+      margin-bottom: 20px;
     }
 
-    /* Stats Cards - Grey theme */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 32px;
+      gap: 20px;
     }
 
     .stat-card {
-      background: white;
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border: 1px solid #E2E8F0;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: #1A1A1A;
-      margin-bottom: 8px;
+      padding: 16px;
+      background: #F7F8FA;
+      border-radius: 6px;
     }
 
     .stat-label {
       font-size: 13px;
       color: #64748B;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      margin-bottom: 4px;
     }
 
-    .variance.positive {
-      color: #059669;
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1A1A1A;
     }
 
-    .variance.negative {
-      color: #DC2626;
-    }
-
-    /* Budget Table - Clean & Minimal */
-    .budget-container {
+    .category-section {
       background: white;
-      border-radius: 12px;
+      padding: 30px;
+      border-radius: 8px;
+      margin-bottom: 20px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border: 1px solid #E2E8F0;
-      overflow: hidden;
-      margin-bottom: 24px;
     }
 
-    .budget-table {
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .category-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1A1A1A;
+    }
+
+    .category-toggle {
+      font-size: 18px;
+      color: #64748B;
+    }
+
+    table {
       width: 100%;
       border-collapse: collapse;
+      font-size: 14px;
     }
 
-    .table-header {
-      background: #FAFAFA;
-      border-bottom: 1px solid #E2E8F0;
+    thead {
+      background: #F7F8FA;
+      border-bottom: 2px solid #E2E8F0;
     }
 
-    .table-header th {
-      padding: 16px;
+    th {
+      padding: 12px;
       text-align: left;
-      font-size: 12px;
       font-weight: 600;
       color: #64748B;
+      font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+    }
+
+    tbody tr {
       border-bottom: 1px solid #E2E8F0;
     }
 
-    .table-header th:last-child {
-      width: 100px;
-      text-align: center;
+    tbody tr:hover {
+      background: #FAFAFA;
     }
 
-    /* Category Row */
-    .category-row {
-      background: #F7F8FA;
-      font-weight: 700;
-      color: #1A1A1A;
+    td {
+      padding: 16px 12px;
+      color: #2D3748;
+    }
+
+    .editable {
       cursor: pointer;
-      transition: background 0.15s;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.15s;
     }
 
-    .category-row:hover {
+    .editable:hover {
       background: #F1F3F5;
     }
 
-    .category-row td {
-      padding: 16px;
-      border-bottom: 1px solid #E2E8F0;
+    .editable:focus {
+      outline: 2px solid #000;
+      background: white;
     }
 
-    .category-name {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 15px;
-    }
-
-    .expand-icon {
-      transition: transform 0.2s;
-      font-size: 12px;
+    .delete-btn {
+      background: none;
+      border: none;
       color: #64748B;
-    }
-
-    .expand-icon.expanded {
-      transform: rotate(90deg);
-    }
-
-    /* Subcategory Row */
-    .subcategory-row {
-      background: #FAFAFA;
-      font-weight: 600;
-      color: #2D3748;
       cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .subcategory-row:hover {
-      background: #F7F8FA;
-    }
-
-    .subcategory-row td {
-      padding: 14px 16px;
-      border-bottom: 1px solid #E2E8F0;
-    }
-
-    .subcategory-name {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding-left: 32px;
-      font-size: 14px;
-    }
-
-    /* Line Item Row */
-    .item-row {
-      background: white;
-      transition: background 0.15s;
-    }
-
-    .item-row:nth-child(even) {
-      background: #FAFAFA;
-    }
-
-    .item-row:hover {
-      background: #F1F3F5;
-    }
-
-    .item-row td {
-      padding: 12px 16px;
-      border-bottom: 1px solid #E2E8F0;
-      font-size: 14px;
-      color: #2D3748;
-    }
-
-    .item-name {
-      padding-left: 64px;
-    }
-
-    /* Editable Cell */
-    .editable-cell {
-      cursor: pointer;
-      position: relative;
-      min-height: 20px;
-    }
-
-    .editable-cell:hover {
-      background: #F1F3F5;
+      padding: 4px 8px;
       border-radius: 4px;
-    }
-
-    .editable-cell input,
-    .editable-cell textarea {
-      width: 100%;
-      padding: 6px 8px;
-      border: 2px solid #000000;
-      border-radius: 4px;
-      font-size: 14px;
-      font-family: inherit;
-      background: white;
-    }
-
-    .editable-cell input:focus,
-    .editable-cell textarea:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
-    }
-
-    .editable-cell textarea {
-      min-height: 60px;
-      resize: vertical;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
+      font-size: 16px;
       opacity: 0;
       transition: opacity 0.15s;
     }
 
-    .item-row:hover .action-buttons,
-    .subcategory-row:hover .action-buttons {
+    tr:hover .delete-btn {
       opacity: 1;
     }
 
-    .btn-icon {
-      padding: 6px 10px;
-      border: 1px solid #E2E8F0;
+    .delete-btn:hover {
+      background: #FEE;
+      color: #E53E3E;
+    }
+
+    .add-btn {
+      background: #000;
+      color: white;
+      border: none;
+      padding: 8px 16px;
       border-radius: 6px;
-      background: white;
       cursor: pointer;
       font-size: 14px;
-      transition: all 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      font-weight: 500;
+      margin-top: 12px;
     }
 
-    .btn-icon:hover {
-      background: #F7F8FA;
-      border-color: #CBD5E1;
+    .add-btn:hover {
+      background: #2D3748;
     }
 
-    .btn-icon.delete:hover {
-      background: #FEE2E2;
-      border-color: #FCA5A5;
+    .subcategory-row {
+      background: #FAFAFA;
+      font-weight: 600;
+    }
+
+    .subcategory-row td {
+      padding: 12px;
+      color: #1A1A1A;
+    }
+
+    .variance-positive {
+      color: #059669;
+    }
+
+    .variance-negative {
       color: #DC2626;
     }
 
-    /* Add Item Buttons */
-    .add-item-row {
-      background: #FAFAFA;
+    .totals-row {
+      background: #F7F8FA;
+      font-weight: 700;
+      border-top: 2px solid #E2E8F0;
     }
 
-    .add-item-row td {
-      padding: 12px 16px;
-      border-bottom: 1px solid #E2E8F0;
+    .totals-row td {
+      padding: 16px 12px;
+      color: #1A1A1A;
     }
 
-    .btn-add {
-      padding: 8px 16px;
-      border: 1px dashed #CBD5E1;
-      border-radius: 6px;
-      background: white;
+    .notes-icon {
+      cursor: pointer;
+      font-size: 16px;
       color: #64748B;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: all 0.15s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
     }
 
-    .btn-add:hover {
-      background: #F7F8FA;
-      border-color: #1A1A1A;
+    .notes-icon:hover {
       color: #1A1A1A;
-    }
-
-    /* Total Row */
-    .total-row {
-      background: #1A1A1A;
-      color: white;
-      font-weight: 700;
-    }
-
-    .total-row td {
-      padding: 16px;
-      border-bottom: none;
-    }
-
-    /* Modal */
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 20px;
-    }
-
-    .modal-content {
-      background: white;
-      border-radius: 12px;
-      padding: 32px;
-      max-width: 500px;
-      width: 100%;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
-    }
-
-    .modal-header {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1A1A1A;
-      margin-bottom: 24px;
-    }
-
-    .modal-body {
-      margin-bottom: 24px;
-    }
-
-    .modal-footer {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-    }
-
-    /* Buttons */
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: inherit;
-    }
-
-    .btn-primary {
-      background: #1A1A1A;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #000000;
-    }
-
-    .btn-secondary {
-      background: white;
-      color: #2D3748;
-      border: 1px solid #E2E8F0;
-    }
-
-    .btn-secondary:hover {
-      background: #F7F8FA;
-    }
-
-    .btn-success {
-      background: #059669;
-      color: white;
-    }
-
-    .btn-success:hover {
-      background: #047857;
-    }
-
-    .btn-danger {
-      background: #DC2626;
-      color: white;
-    }
-
-    .btn-danger:hover {
-      background: #B91C1C;
-    }
-
-    /* Notes indicator */
-    .notes-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      background: #000000;
-      border-radius: 50%;
-      margin-left: 4px;
-    }
-
-    /* Responsive */
-    @media (max-width: 968px) {
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .budget-container {
-        overflow-x: auto;
-      }
-
-      .table-header th {
-        font-size: 11px;
-        padding: 12px 8px;
-      }
-
-      .item-row td,
-      .subcategory-row td,
-      .category-row td {
-        padding: 10px 8px;
-        font-size: 13px;
-      }
-
-      .item-name {
-        padding-left: 32px;
-      }
-
-      .subcategory-name {
-        padding-left: 16px;
-      }
     }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div class="header">
+    <div class="logo">⛰️ Alpine Property Group</div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
 
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+  <div class="container">
+    <div class="project-header">
+      <h1 id="projectName">Project Budget & Cost Tracker</h1>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Budgeted</div>
+          <div class="stat-value" id="totalBudgeted">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Actual</div>
+          <div class="stat-value" id="totalActual">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Variance</div>
+          <div class="stat-value" id="totalVariance">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">% Complete</div>
+          <div class="stat-value" id="percentComplete">0%</div>
+        </div>
+      </div>
+    </div>
 
-    // Initial hierarchical data structure
-    const INITIAL_CATEGORIES = [
-      {
-        id: 'hard-costs',
-        name: 'Hard Costs',
-        type: 'category',
-        expanded: true,
-        subcategories: [
-          {
-            id: 'land',
-            name: 'Land Acquisition',
-            expanded: true,
-            items: [
-              { id: 'land-1', name: 'Land Purchase', estimated: 500000, actual: 500000, notes: '' },
-              { id: 'land-2', name: 'Legal & Due Diligence', estimated: 15000, actual: 14200, notes: '' }
-            ]
-          },
-          {
-            id: 'site-work',
-            name: 'Site Work & Utilities',
-            expanded: true,
-            items: [
-              { id: 'site-1', name: 'Site Prep & Grading', estimated: 35000, actual: 0, notes: '' },
-              { id: 'site-2', name: 'Utilities Connection', estimated: 25000, actual: 0, notes: '' }
-            ]
-          },
-          {
-            id: 'foundation',
-            name: 'Foundation',
-            expanded: false,
-            items: [
-              { id: 'found-1', name: 'Excavation', estimated: 18000, actual: 0, notes: '' },
-              { id: 'found-2', name: 'Concrete & Rebar', estimated: 45000, actual: 0, notes: '' }
-            ]
-          },
-          {
-            id: 'framing',
-            name: 'Framing & Structure',
-            expanded: false,
-            items: [
-              { id: 'frame-1', name: 'Lumber & Materials', estimated: 85000, actual: 0, notes: '' },
-              { id: 'frame-2', name: 'Labor', estimated: 55000, actual: 0, notes: '' }
-            ]
-          },
-          {
-            id: 'electrical',
-            name: 'Electrical',
-            expanded: true,
-            items: [
-              { id: 'elec-1', name: 'Main Panel', estimated: 5000, actual: 4800, notes: 'Vendor: ABC Electric' },
-              { id: 'elec-2', name: 'Wiring & Outlets', estimated: 12000, actual: 0, notes: '' },
-              { id: 'elec-3', name: 'Fixtures', estimated: 3500, actual: 0, notes: '' }
-            ]
-          },
-          {
-            id: 'plumbing',
-            name: 'Plumbing',
-            expanded: false,
-            items: [
-              { id: 'plumb-1', name: 'Rough-in', estimated: 18000, actual: 0, notes: '' },
-              { id: 'plumb-2', name: 'Fixtures', estimated: 8500, actual: 0, notes: '' }
-            ]
-          },
-          {
-            id: 'hvac',
-            name: 'HVAC',
-            expanded: false,
-            items: [
-              { id: 'hvac-1', name: 'System Installation', estimated: 22000, actual: 0, notes: '' },
-              { id: 'hvac-2', name: 'Ductwork', estimated: 8000, actual: 0, notes: '' }
-            ]
-          }
-        ]
-      },
-      {
-        id: 'soft-costs',
-        name: 'Soft Costs',
-        type: 'category',
-        expanded: true,
-        subcategories: [
-          {
-            id: 'permits',
-            name: 'Permits & Fees',
-            expanded: true,
-            items: [
-              { id: 'perm-1', name: 'Building Permits', estimated: 12000, actual: 12000, notes: '' },
-              { id: 'perm-2', name: 'Impact Fees', estimated: 8500, actual: 8500, notes: '' }
-            ]
-          },
-          {
-            id: 'design',
-            name: 'Design & Engineering',
-            expanded: false,
-            items: [
-              { id: 'design-1', name: 'Architectural Plans', estimated: 25000, actual: 25000, notes: '' },
-              { id: 'design-2', name: 'Structural Engineering', estimated: 15000, actual: 15000, notes: '' }
-            ]
-          }
-        ]
-      },
-      {
-        id: 'contingency',
-        name: 'Contingency',
-        type: 'category',
-        expanded: true,
-        subcategories: [
-          {
-            id: 'buffer',
-            name: 'Contingency Buffer',
-            expanded: true,
-            items: [
-              { id: 'cont-1', name: 'Construction Contingency (5%)', estimated: 50000, actual: 0, notes: '' }
-            ]
-          }
-        ]
-      }
+    <div class="category-section" id="hardCosts">
+      <div class="category-header" onclick="toggleCategory('hardCosts')">
+        <h2 class="category-title">Hard Costs</h2>
+        <span class="category-toggle">▼</span>
+      </div>
+      <div class="category-content">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 30%">Line Item</th>
+              <th style="width: 15%">Estimated</th>
+              <th style="width: 10%">% of Project</th>
+              <th style="width: 15%">Actual</th>
+              <th style="width: 12%">Variance ($)</th>
+              <th style="width: 10%">Variance (%)</th>
+              <th style="width: 5%">Notes</th>
+              <th style="width: 3%"></th>
+            </tr>
+          </thead>
+          <tbody id="hardCostsBody">
+            <!-- Line items will be rendered here -->
+          </tbody>
+        </table>
+        <button class="add-btn" onclick="addLineItem('hard')">+ Add Line Item</button>
+      </div>
+    </div>
+
+    <div class="category-section" id="softCosts">
+      <div class="category-header" onclick="toggleCategory('softCosts')">
+        <h2 class="category-title">Soft Costs</h2>
+        <span class="category-toggle">▼</span>
+      </div>
+      <div class="category-content">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 30%">Line Item</th>
+              <th style="width: 15%">Estimated</th>
+              <th style="width: 10%">% of Project</th>
+              <th style="width: 15%">Actual</th>
+              <th style="width: 12%">Variance ($)</th>
+              <th style="width: 10%">Variance (%)</th>
+              <th style="width: 5%">Notes</th>
+              <th style="width: 3%"></th>
+            </tr>
+          </thead>
+          <tbody id="softCostsBody">
+            <!-- Line items will be rendered here -->
+          </tbody>
+        </table>
+        <button class="add-btn" onclick="addLineItem('soft')">+ Add Line Item</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Default template data
+    const defaultHardCosts = [
+      'Land Acquisition',
+      'Demolition',
+      'Site Prep',
+      'Foundation',
+      'Framing',
+      'Roofing',
+      'Exterior Finishes',
+      'Windows & Doors',
+      'Plumbing',
+      'HVAC',
+      'Electrical',
+      'Interior Finishes',
+      'Flooring',
+      'Kitchen & Bath',
+      'Elevators'
     ];
 
-    function App() {
-      const [projects, setProjects] = useState([]);
-      const [selectedProjectId, setSelectedProjectId] = useState(null);
-      const [categories, setCategories] = useState([]);
-      const [editingCell, setEditingCell] = useState(null);
-      const [showDeleteModal, setShowDeleteModal] = useState(null);
+    const defaultSoftCosts = [
+      'Architecture & Design',
+      'Engineering',
+      'Legal Fees',
+      'Permits & Fees',
+      'Insurance',
+      'Financing Costs',
+      'Marketing',
+      'Accounting',
+      'Developer Fee',
+      'Contingency'
+    ];
 
-      useEffect(() => {
-        loadData();
-      }, []);
+    let projectData = {
+      hardCosts: [],
+      softCosts: []
+    };
 
-      const loadData = () => {
-        const projectData = AlpineData.getProjects();
-        setProjects(projectData);
-        if (projectData.length > 0 && !selectedProjectId) {
-          setSelectedProjectId(projectData[0].id);
-        }
+    // Initialize
+    function init() {
+      loadData();
+      if (projectData.hardCosts.length === 0) {
+        // First time - create default template
+        projectData.hardCosts = defaultHardCosts.map((name, i) => ({
+          id: `hard-${i}`,
+          name,
+          estimated: 0,
+          actual: 0,
+          notes: ''
+        }));
+        projectData.softCosts = defaultSoftCosts.map((name, i) => ({
+          id: `soft-${i}`,
+          name,
+          estimated: 0,
+          actual: 0,
+          notes: ''
+        }));
+        saveData();
+      }
+      render();
+    }
 
-        // Load or initialize budget data
-        let budgetData = AlpineData.getAll('alpine_budget_cogs') || [];
-        
-        // Initialize with sample data if empty
-        if (budgetData.length === 0 && projectData.length > 0) {
-          budgetData = projectData.map(project => ({
-            projectId: project.id,
-            categories: JSON.parse(JSON.stringify(INITIAL_CATEGORIES))
-          }));
-          AlpineData.save('alpine_budget_cogs', budgetData);
-        }
+    function loadData() {
+      const saved = localStorage.getItem('alpineBudgetData');
+      if (saved) {
+        projectData = JSON.parse(saved);
+      }
+    }
 
-        if (selectedProjectId || (projectData.length > 0)) {
-          const projectId = selectedProjectId || projectData[0].id;
-          const projectBudget = budgetData.find(b => b.projectId === projectId);
-          if (projectBudget) {
-            setCategories(projectBudget.categories);
-          } else {
-            const newBudget = {
-              projectId: projectId,
-              categories: JSON.parse(JSON.stringify(INITIAL_CATEGORIES))
-            };
-            budgetData.push(newBudget);
-            AlpineData.save('alpine_budget_cogs', budgetData);
-            setCategories(newBudget.categories);
-          }
-        }
-      };
+    function saveData() {
+      localStorage.setItem('alpineBudgetData', JSON.stringify(projectData));
+      updateTotals();
+    }
 
-      useEffect(() => {
-        if (selectedProjectId) {
-          const budgetData = AlpineData.getAll('alpine_budget_cogs') || [];
-          const projectBudget = budgetData.find(b => b.projectId === selectedProjectId);
-          if (projectBudget) {
-            setCategories(projectBudget.categories);
-          } else {
-            const newBudget = {
-              projectId: selectedProjectId,
-              categories: JSON.parse(JSON.stringify(INITIAL_CATEGORIES))
-            };
-            budgetData.push(newBudget);
-            AlpineData.save('alpine_budget_cogs', budgetData);
-            setCategories(newBudget.categories);
-          }
-        }
-      }, [selectedProjectId]);
+    function render() {
+      renderCategory('hardCosts', projectData.hardCosts);
+      renderCategory('softCosts', projectData.softCosts);
+      updateTotals();
+    }
 
-      const saveCategories = (updatedCategories) => {
-        setCategories(updatedCategories);
-        const budgetData = AlpineData.getAll('alpine_budget_cogs') || [];
-        const index = budgetData.findIndex(b => b.projectId === selectedProjectId);
-        if (index !== -1) {
-          budgetData[index].categories = updatedCategories;
-        } else {
-          budgetData.push({
-            projectId: selectedProjectId,
-            categories: updatedCategories
-          });
-        }
-        AlpineData.save('alpine_budget_cogs', budgetData);
-      };
+    function renderCategory(category, items) {
+      const tbody = document.getElementById(`${category}Body`);
+      tbody.innerHTML = '';
 
-      const toggleCategory = (catId) => {
-        const updated = categories.map(cat =>
-          cat.id === catId ? { ...cat, expanded: !cat.expanded } : cat
-        );
-        saveCategories(updated);
-      };
+      items.forEach((item, index) => {
+        const variance = item.actual - item.estimated;
+        const variancePct = item.estimated > 0 ? ((variance / item.estimated) * 100).toFixed(1) : 0;
+        const pctOfProject = calculatePctOfProject(item.estimated);
 
-      const toggleSubcategory = (catId, subId) => {
-        const updated = categories.map(cat =>
-          cat.id === catId
-            ? {
-                ...cat,
-                subcategories: cat.subcategories.map(sub =>
-                  sub.id === subId ? { ...sub, expanded: !sub.expanded } : sub
-                )
-              }
-            : cat
-        );
-        saveCategories(updated);
-      };
-
-      const updateItem = (catId, subId, itemId, field, value) => {
-        const updated = categories.map(cat =>
-          cat.id === catId
-            ? {
-                ...cat,
-                subcategories: cat.subcategories.map(sub =>
-                  sub.id === subId
-                    ? {
-                        ...sub,
-                        items: sub.items.map(item =>
-                          item.id === itemId ? { ...item, [field]: value } : item
-                        )
-                      }
-                    : sub
-                )
-              }
-            : cat
-        );
-        saveCategories(updated);
-      };
-
-      const addSubcategory = (catId) => {
-        const newSubName = prompt('Enter subcategory name:');
-        if (!newSubName || !newSubName.trim()) return;
-
-        const updated = categories.map(cat =>
-          cat.id === catId
-            ? {
-                ...cat,
-                subcategories: [
-                  ...cat.subcategories,
-                  {
-                    id: `sub-${Date.now()}`,
-                    name: newSubName.trim(),
-                    expanded: true,
-                    items: []
-                  }
-                ]
-              }
-            : cat
-        );
-        saveCategories(updated);
-      };
-
-      const addLineItem = (catId, subId) => {
-        const newItemName = prompt('Enter line item name:');
-        if (!newItemName || !newItemName.trim()) return;
-
-        const updated = categories.map(cat =>
-          cat.id === catId
-            ? {
-                ...cat,
-                subcategories: cat.subcategories.map(sub =>
-                  sub.id === subId
-                    ? {
-                        ...sub,
-                        items: [
-                          ...sub.items,
-                          {
-                            id: `item-${Date.now()}`,
-                            name: newItemName.trim(),
-                            estimated: 0,
-                            actual: 0,
-                            notes: ''
-                          }
-                        ]
-                      }
-                    : sub
-                )
-              }
-            : cat
-        );
-        saveCategories(updated);
-      };
-
-      const deleteItem = (catId, subId, itemId) => {
-        const updated = categories.map(cat =>
-          cat.id === catId
-            ? {
-                ...cat,
-                subcategories: cat.subcategories.map(sub =>
-                  sub.id === subId
-                    ? {
-                        ...sub,
-                        items: sub.items.filter(item => item.id !== itemId)
-                      }
-                    : sub
-                )
-              }
-            : cat
-        );
-        saveCategories(updated);
-        setShowDeleteModal(null);
-      };
-
-      const deleteSubcategory = (catId, subId) => {
-        const updated = categories.map(cat =>
-          cat.id === catId
-            ? {
-                ...cat,
-                subcategories: cat.subcategories.filter(sub => sub.id !== subId)
-              }
-            : cat
-        );
-        saveCategories(updated);
-        setShowDeleteModal(null);
-      };
-
-      // Calculate totals
-      let totalEstimated = 0;
-      let totalActual = 0;
-
-      categories.forEach(cat => {
-        cat.subcategories.forEach(sub => {
-          sub.items.forEach(item => {
-            totalEstimated += parseFloat(item.estimated) || 0;
-            totalActual += parseFloat(item.actual) || 0;
-          });
-        });
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <div class="editable" contenteditable="true" 
+                 onblur="updateField('${category}', ${index}, 'name', this.textContent)"
+                 onkeydown="handleEnter(event)">${item.name}</div>
+          </td>
+          <td>
+            <div class="editable" contenteditable="true" 
+                 onblur="updateField('${category}', ${index}, 'estimated', this.textContent)"
+                 onkeydown="handleEnter(event)">$${formatNumber(item.estimated)}</div>
+          </td>
+          <td>${pctOfProject}%</td>
+          <td>
+            <div class="editable" contenteditable="true" 
+                 onblur="updateField('${category}', ${index}, 'actual', this.textContent)"
+                 onkeydown="handleEnter(event)">$${formatNumber(item.actual)}</div>
+          </td>
+          <td class="${variance >= 0 ? 'variance-positive' : 'variance-negative'}">
+            $${formatNumber(Math.abs(variance))} ${variance >= 0 ? '⬆' : '⬇'}
+          </td>
+          <td class="${variance >= 0 ? 'variance-positive' : 'variance-negative'}">
+            ${variancePct}%
+          </td>
+          <td>
+            <span class="notes-icon" onclick="editNotes('${category}', ${index})">
+              ${item.notes ? '📝' : '📄'}
+            </span>
+          </td>
+          <td>
+            <button class="delete-btn" onclick="deleteItem('${category}', ${index})">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
       });
 
-      const totalVariance = totalEstimated - totalActual;
-      const variancePercent = totalEstimated > 0 ? (totalVariance / totalEstimated) : 0;
-      const burnRate = totalEstimated > 0 ? (totalActual / totalEstimated) : 0;
-
-      return (
-        <div className="container">
-          <div className="header">
-            <h1>📊 Budget vs Actual (COGS)</h1>
-            <div className="nav-buttons">
-              <a href="index.html" className="btn btn-secondary">← Back to Home</a>
-            </div>
-          </div>
-
-          <div className="project-selector">
-            <select
-              value={selectedProjectId || ''}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-            >
-              <option value="">Select a project...</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {selectedProjectId && (
-            <>
-              <div className="stats-grid">
-                <div className="stat-card">
-                  <div className="stat-value">{AlpineData.formatCurrency(totalEstimated)}</div>
-                  <div className="stat-label">Total Estimated</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-value">{AlpineData.formatCurrency(totalActual)}</div>
-                  <div className="stat-label">Total Actual</div>
-                </div>
-                <div className="stat-card">
-                  <div className={`stat-value variance ${totalVariance >= 0 ? 'positive' : 'negative'}`}>
-                    {AlpineData.formatCurrency(totalVariance)}
-                  </div>
-                  <div className="stat-label">Variance</div>
-                </div>
-                <div className="stat-card">
-                  <div className={`stat-value variance ${totalVariance >= 0 ? 'positive' : 'negative'}`}>
-                    {AlpineData.formatPercent(variancePercent)}
-                  </div>
-                  <div className="stat-label">Variance %</div>
-                </div>
-                <div className="stat-card">
-                  <div className="stat-value">{AlpineData.formatPercent(burnRate)}</div>
-                  <div className="stat-label">Burn Rate</div>
-                </div>
-              </div>
-
-              <div className="budget-container">
-                <table className="budget-table">
-                  <thead className="table-header">
-                    <tr>
-                      <th style={{width: '35%'}}>Item</th>
-                      <th style={{width: '15%'}}>Estimated</th>
-                      <th style={{width: '15%'}}>Actual</th>
-                      <th style={{width: '15%'}}>Variance</th>
-                      <th style={{width: '10%'}}>Var %</th>
-                      <th style={{width: '10%'}}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map(category => (
-                      <React.Fragment key={category.id}>
-                        <tr className="category-row" onClick={() => toggleCategory(category.id)}>
-                          <td>
-                            <div className="category-name">
-                              <span className={`expand-icon ${category.expanded ? 'expanded' : ''}`}>▶</span>
-                              <span>{category.name}</span>
-                            </div>
-                          </td>
-                          <td colSpan="4"></td>
-                          <td>
-                            <button
-                              className="btn-icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                addSubcategory(category.id);
-                              }}
-                            >
-                              + Sub
-                            </button>
-                          </td>
-                        </tr>
-
-                        {category.expanded && category.subcategories.map(subcategory => (
-                          <React.Fragment key={subcategory.id}>
-                            <tr className="subcategory-row" onClick={() => toggleSubcategory(category.id, subcategory.id)}>
-                              <td>
-                                <div className="subcategory-name">
-                                  <span className={`expand-icon ${subcategory.expanded ? 'expanded' : ''}`}>▶</span>
-                                  <span>{subcategory.name}</span>
-                                </div>
-                              </td>
-                              <td colSpan="4"></td>
-                              <td>
-                                <div className="action-buttons">
-                                  <button
-                                    className="btn-icon delete"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setShowDeleteModal({
-                                        type: 'subcategory',
-                                        catId: category.id,
-                                        subId: subcategory.id,
-                                        name: subcategory.name
-                                      });
-                                    }}
-                                  >
-                                    🗑️
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-
-                            {subcategory.expanded && subcategory.items.map(item => {
-                              const est = parseFloat(item.estimated) || 0;
-                              const act = parseFloat(item.actual) || 0;
-                              const variance = est - act;
-                              const varPercent = est > 0 ? (variance / est) : 0;
-
-                              return (
-                                <tr key={item.id} className="item-row">
-                                  <td className="item-name">
-                                    <EditableCell
-                                      value={item.name}
-                                      onSave={(value) => updateItem(category.id, subcategory.id, item.id, 'name', value)}
-                                      type="text"
-                                    />
-                                    {item.notes && <span className="notes-indicator" title={item.notes}></span>}
-                                  </td>
-                                  <td>
-                                    <EditableCell
-                                      value={item.estimated}
-                                      onSave={(value) => updateItem(category.id, subcategory.id, item.id, 'estimated', parseFloat(value) || 0)}
-                                      type="number"
-                                      format="currency"
-                                    />
-                                  </td>
-                                  <td>
-                                    <EditableCell
-                                      value={item.actual}
-                                      onSave={(value) => updateItem(category.id, subcategory.id, item.id, 'actual', parseFloat(value) || 0)}
-                                      type="number"
-                                      format="currency"
-                                    />
-                                  </td>
-                                  <td className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
-                                    {AlpineData.formatCurrency(variance)}
-                                  </td>
-                                  <td className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
-                                    {AlpineData.formatPercent(varPercent)}
-                                  </td>
-                                  <td>
-                                    <div className="action-buttons">
-                                      <button
-                                        className="btn-icon"
-                                        onClick={() => {
-                                          const newNotes = prompt('Edit notes:', item.notes);
-                                          if (newNotes !== null) {
-                                            updateItem(category.id, subcategory.id, item.id, 'notes', newNotes);
-                                          }
-                                        }}
-                                      >
-                                        📝
-                                      </button>
-                                      <button
-                                        className="btn-icon delete"
-                                        onClick={() => setShowDeleteModal({
-                                          type: 'item',
-                                          catId: category.id,
-                                          subId: subcategory.id,
-                                          itemId: item.id,
-                                          name: item.name
-                                        })}
-                                      >
-                                        🗑️
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-
-                            {subcategory.expanded && (
-                              <tr className="add-item-row">
-                                <td colSpan="6" style={{paddingLeft: '64px'}}>
-                                  <button
-                                    className="btn-add"
-                                    onClick={() => addLineItem(category.id, subcategory.id)}
-                                  >
-                                    + Add Line Item
-                                  </button>
-                                </td>
-                              </tr>
-                            )}
-                          </React.Fragment>
-                        ))}
-                      </React.Fragment>
-                    ))}
-
-                    <tr className="total-row">
-                      <td>TOTAL</td>
-                      <td>{AlpineData.formatCurrency(totalEstimated)}</td>
-                      <td>{AlpineData.formatCurrency(totalActual)}</td>
-                      <td className={totalVariance >= 0 ? 'positive' : 'negative'}>
-                        {AlpineData.formatCurrency(totalVariance)}
-                      </td>
-                      <td className={totalVariance >= 0 ? 'positive' : 'negative'}>
-                        {AlpineData.formatPercent(variancePercent)}
-                      </td>
-                      <td></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-
-          {showDeleteModal && (
-            <DeleteModal
-              data={showDeleteModal}
-              onConfirm={() => {
-                if (showDeleteModal.type === 'item') {
-                  deleteItem(showDeleteModal.catId, showDeleteModal.subId, showDeleteModal.itemId);
-                } else {
-                  deleteSubcategory(showDeleteModal.catId, showDeleteModal.subId);
-                }
-              }}
-              onCancel={() => setShowDeleteModal(null)}
-            />
-          )}
-        </div>
-      );
+      // Add totals row
+      const totals = calculateCategoryTotals(items);
+      const totalRow = document.createElement('tr');
+      totalRow.className = 'totals-row';
+      totalRow.innerHTML = `
+        <td>Total</td>
+        <td>$${formatNumber(totals.estimated)}</td>
+        <td>100%</td>
+        <td>$${formatNumber(totals.actual)}</td>
+        <td>$${formatNumber(Math.abs(totals.variance))}</td>
+        <td>${totals.variancePct}%</td>
+        <td></td>
+        <td></td>
+      `;
+      tbody.appendChild(totalRow);
     }
 
-    function EditableCell({ value, onSave, type = 'text', format = null }) {
-      const [isEditing, setIsEditing] = useState(false);
-      const [editValue, setEditValue] = useState(value);
-      const inputRef = useRef(null);
-
-      useEffect(() => {
-        if (isEditing && inputRef.current) {
-          inputRef.current.focus();
-          inputRef.current.select();
-        }
-      }, [isEditing]);
-
-      const handleSave = () => {
-        if (editValue !== value) {
-          onSave(editValue);
-        }
-        setIsEditing(false);
-      };
-
-      const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-          handleSave();
-        } else if (e.key === 'Escape') {
-          setEditValue(value);
-          setIsEditing(false);
-        }
-      };
-
-      const displayValue = format === 'currency' 
-        ? AlpineData.formatCurrency(value)
-        : value;
-
-      if (isEditing) {
-        return (
-          <input
-            ref={inputRef}
-            type={type}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-          />
-        );
+    function updateField(category, index, field, value) {
+      const cleanValue = value.replace(/[$,]/g, '').trim();
+      
+      if (field === 'estimated' || field === 'actual') {
+        projectData[category][index][field] = parseFloat(cleanValue) || 0;
+      } else {
+        projectData[category][index][field] = cleanValue;
       }
-
-      return (
-        <div
-          className="editable-cell"
-          onClick={() => {
-            setEditValue(value);
-            setIsEditing(true);
-          }}
-        >
-          {displayValue}
-        </div>
-      );
+      
+      saveData();
+      render();
     }
 
-    function DeleteModal({ data, onConfirm, onCancel }) {
-      return (
-        <div className="modal" onClick={onCancel}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              {data.type === 'item' ? 'Delete Line Item?' : 'Delete Subcategory?'}
-            </div>
-            <div className="modal-body">
-              <p>Are you sure you want to delete <strong>{data.name}</strong>?</p>
-              {data.type === 'subcategory' && (
-                <p style={{marginTop: '12px', color: '#DC2626', fontSize: '14px'}}>
-                  ⚠️ This will also delete all line items under this subcategory.
-                </p>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={onCancel}>
-                Cancel
-              </button>
-              <button className="btn btn-danger" onClick={onConfirm}>
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      );
+    function deleteItem(category, index) {
+      if (confirm('Delete this line item?')) {
+        projectData[category].splice(index, 1);
+        saveData();
+        render();
+      }
     }
 
-    ReactDOM.render(<App />, document.getElementById('root'));
-  </script>
+    function addLineItem(type) {
+      const category = type === 'hard' ? 'hardCosts' : 'softCosts';
+      const name = prompt('Enter line item name:');
+      if (name) {
+        projectData[category].push({
+          id: `${type}-${Date.now()}`,
+          name: name,
+          estimated: 0,
+          actual: 0,
+          notes: ''
+        });
+        saveData();
+        render();
+      }
+    }
 
-  <!-- Authentication -->
-  <script src="auth.js"></script>
-  <script>
-    requireAuth();
-    window.addEventListener('DOMContentLoaded', () => { addLogoutButton(); });
+    function editNotes(category, index) {
+      const item = projectData[category][index];
+      const notes = prompt('Enter notes:', item.notes || '');
+      if (notes !== null) {
+        item.notes = notes;
+        saveData();
+        render();
+      }
+    }
+
+    function calculateCategoryTotals(items) {
+      const estimated = items.reduce((sum, item) => sum + item.estimated, 0);
+      const actual = items.reduce((sum, item) => sum + item.actual, 0);
+      const variance = actual - estimated;
+      const variancePct = estimated > 0 ? ((variance / estimated) * 100).toFixed(1) : 0;
+      return { estimated, actual, variance, variancePct };
+    }
+
+    function calculatePctOfProject(amount) {
+      const total = getTotalBudget();
+      return total > 0 ? ((amount / total) * 100).toFixed(1) : 0;
+    }
+
+    function getTotalBudget() {
+      const hardTotal = projectData.hardCosts.reduce((sum, item) => sum + item.estimated, 0);
+      const softTotal = projectData.softCosts.reduce((sum, item) => sum + item.estimated, 0);
+      return hardTotal + softTotal;
+    }
+
+    function updateTotals() {
+      const hardTotals = calculateCategoryTotals(projectData.hardCosts);
+      const softTotals = calculateCategoryTotals(projectData.softCosts);
+      
+      const totalBudgeted = hardTotals.estimated + softTotals.estimated;
+      const totalActual = hardTotals.actual + softTotals.actual;
+      const totalVariance = totalActual - totalBudgeted;
+      const percentComplete = totalBudgeted > 0 ? ((totalActual / totalBudgeted) * 100).toFixed(1) : 0;
+
+      document.getElementById('totalBudgeted').textContent = '$' + formatNumber(totalBudgeted);
+      document.getElementById('totalActual').textContent = '$' + formatNumber(totalActual);
+      document.getElementById('totalVariance').textContent = '$' + formatNumber(Math.abs(totalVariance));
+      document.getElementById('percentComplete').textContent = percentComplete + '%';
+    }
+
+    function toggleCategory(id) {
+      const section = document.getElementById(id);
+      const content = section.querySelector('.category-content');
+      const toggle = section.querySelector('.category-toggle');
+      
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.textContent = '▼';
+      } else {
+        content.style.display = 'none';
+        toggle.textContent = '▶';
+      }
+    }
+
+    function handleEnter(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.target.blur();
+      }
+    }
+
+    function formatNumber(num) {
+      return num.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+
+    function logout() {
+      sessionStorage.removeItem('alpineAuth');
+      window.location.href = 'login.html';
+    }
+
+    // Check auth
+    const auth = sessionStorage.getItem('alpineAuth');
+    if (!auth) {
+      window.location.href = 'login.html';
+    }
+
+    // Initialize on load
+    init();
   </script>
 </body>
 </html>
