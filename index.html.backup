@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alpine Property Group | Development Toolkit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Black, White, Grey Color Palette */
+      --black: #000000;
+      --grey-900: #1A1A1A;
+      --grey-800: #2D3748;
+      --grey-700: #4A5568;
+      --grey-600: #64748B;
+      --grey-500: #94A3B8;
+      --grey-400: #CBD5E1;
+      --grey-300: #E2E8F0;
+      --grey-200: #F1F3F5;
+      --grey-100: #F7F8FA;
+      --grey-50: #FAFAFA;
+      --white: #FFFFFF;
+      
+      --success: #059669;
+      --warning: #F59E0B;
+      --danger: #DC2626;
+      
+      /* Shadows - Subtle and minimal */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      
+      /* Transitions */
+      --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--white);
+      min-height: 100vh;
+      padding: 24px;
+      color: var(--grey-800);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: var(--white);
+      padding: 32px 40px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 32px;
+      border: 1px solid var(--grey-300);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 8px;
+    }
+
+    .logo-container {
+      background: var(--grey-900);
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .logo {
+      height: 48px;
+      width: auto;
+      display: block;
+      filter: brightness(0) invert(1);
+    }
+
+    .header-text {
+      flex: 1;
+    }
+
+    .header h1 {
+      color: var(--grey-900);
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 4px;
+    }
+
+    .header-subtitle {
+      color: var(--grey-600);
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--grey-50);
+      padding: 48px 40px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 32px;
+      border: 1px solid var(--grey-300);
+      text-align: center;
+    }
+
+    .hero h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--grey-900);
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--grey-600);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Tools Grid */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .tool-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--grey-300);
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--black);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .tool-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+      border-color: var(--grey-400);
+    }
+
+    .tool-card:hover::before {
+      opacity: 1;
+    }
+
+    .tool-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      display: inline-block;
+    }
+
+    .tool-card h3 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--grey-900);
+      margin-bottom: 12px;
+      letter-spacing: -0.015em;
+    }
+
+    .tool-card p {
+      color: var(--grey-600);
+      line-height: 1.6;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    .tool-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .feature-tag {
+      background: var(--grey-100);
+      color: var(--grey-700);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-ready {
+      background: rgba(5, 150, 105, 0.1);
+      color: var(--success);
+    }
+
+    .status-beta {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--grey-50);
+      padding: 24px 40px;
+      border-radius: 12px;
+      border: 1px solid var(--grey-300);
+      text-align: center;
+      color: var(--grey-600);
+    }
+
+    .footer p {
+      font-size: 14px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+
+      .header {
+        padding: 24px;
+      }
+
+      .header-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 28px;
+      }
+
+      .logo {
+        height: 40px;
+      }
+
+      .hero {
+        padding: 32px 24px;
+      }
+
+      .hero h2 {
+        font-size: 24px;
+      }
+
+      .tools-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .tool-card {
+        padding: 24px;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .tool-card {
+      animation: fadeInUp 0.3s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .tool-card:nth-child(1) { animation-delay: 50ms; }
+    .tool-card:nth-child(2) { animation-delay: 100ms; }
+    .tool-card:nth-child(3) { animation-delay: 150ms; }
+    .tool-card:nth-child(4) { animation-delay: 200ms; }
+    .tool-card:nth-child(5) { animation-delay: 250ms; }
+    .tool-card:nth-child(6) { animation-delay: 300ms; }
+    .tool-card:nth-child(7) { animation-delay: 350ms; }
+    .tool-card:nth-child(8) { animation-delay: 400ms; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header with Logo -->
+    <div class="header">
+      <div class="header-content">
+        <div class="logo-container">
+          <img src="alpine-logo.png" alt="Alpine Property Group" class="logo">
+        </div>
+        <div class="header-text">
+          <h1>Alpine Property Group</h1>
+          <p class="header-subtitle">Professional Development Toolkit</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero">
+      <h2>Enterprise-Grade Development Tools</h2>
+      <p>Complete suite of tools for real estate development, project management, and investor relations. Built for professionals who demand excellence.</p>
+    </div>
+
+    <!-- Tools Grid -->
+    <div class="tools-grid">
+      <!-- Development Pipeline -->
+      <a href="alpine-pipeline.html" class="tool-card">
+        <div class="tool-icon">🏗️</div>
+        <h3>Development Pipeline</h3>
+        <span class="status-badge status-ready">Ready</span>
+        <p>Track projects from lead to exit. Kanban-style board with stage management, project values, and timeline tracking.</p>
+        <div class="tool-features">
+          <span class="feature-tag">Pipeline View</span>
+          <span class="feature-tag">Stage Tracking</span>
+          <span class="feature-tag">Project Metrics</span>
+        </div>
+      </a>
+
+      <!-- Budget Tracker -->
+      <a href="alpine-budget.html" class="tool-card">
+        <div class="tool-icon">💰</div>
+        <h3>Budget Tracker</h3>
+        <span class="status-badge status-ready">Ready</span>
+        <p>Monitor budgets vs actuals, track variances, and manage cash flow across all development projects.</p>
+        <div class="tool-features">
+          <span class="feature-tag">Variance Analysis</span>
+          <span class="feature-tag">Cash Flow</span>
+          <span class="feature-tag">Real-time Updates</span>
+        </div>
+      </a>
+
+      <!-- Feasibility Analysis -->
+      <a href="alpine-feasibility.html" class="tool-card">
+        <div class="tool-icon">📊</div>
+        <h3>Feasibility Analysis</h3>
+        <span class="status-badge status-beta">Building</span>
+        <p>Quick feasibility checks for potential deals. Calculate ROI, profit margins, and development yields.</p>
+        <div class="tool-features">
+          <span class="feature-tag">ROI Calculator</span>
+          <span class="feature-tag">Profit Analysis</span>
+          <span class="feature-tag">Quick Screening</span>
+        </div>
+      </a>
+
+      <!-- Waterfall Calculator -->
+      <a href="alpine-waterfall.html" class="tool-card">
+        <div class="tool-icon">💎</div>
+        <h3>Waterfall Calculator</h3>
+        <span class="status-badge status-beta">Building</span>
+        <p>Model investor returns and distribution waterfalls. Calculate LP/GP splits and preferred returns.</p>
+        <div class="tool-features">
+          <span class="feature-tag">Investor Returns</span>
+          <span class="feature-tag">LP/GP Splits</span>
+          <span class="feature-tag">Waterfall Modeling</span>
+        </div>
+      </a>
+
+      <!-- Construction Schedule -->
+      <a href="alpine-schedule.html" class="tool-card">
+        <div class="tool-icon">📅</div>
+        <h3>Construction Schedule</h3>
+        <span class="status-badge status-beta">Building</span>
+        <p>Track construction milestones, critical path, and timeline dependencies. Gantt-style visualization.</p>
+        <div class="tool-features">
+          <span class="feature-tag">Milestone Tracking</span>
+          <span class="feature-tag">Critical Path</span>
+          <span class="feature-tag">Gantt View</span>
+        </div>
+      </a>
+
+      <!-- Property Manager -->
+      <a href="alpine-property-mgmt.html" class="tool-card">
+        <div class="tool-icon">🏢</div>
+        <h3>Property Manager</h3>
+        <span class="status-badge status-beta">Building</span>
+        <p>Manage portfolio properties, units, tenants, and leases. Track occupancy and rental income.</p>
+        <div class="tool-features">
+          <span class="feature-tag">Unit Tracking</span>
+          <span class="feature-tag">Lease Management</span>
+          <span class="feature-tag">Occupancy Metrics</span>
+        </div>
+      </a>
+
+      <!-- Documents -->
+      <a href="alpine-docs.html" class="tool-card">
+        <div class="tool-icon">📄</div>
+        <h3>Documents</h3>
+        <span class="status-badge status-beta">Building</span>
+        <p>Store and manage contracts, agreements, and forms. Templates and document generation.</p>
+        <div class="tool-features">
+          <span class="feature-tag">Templates</span>
+          <span class="feature-tag">Document Storage</span>
+          <span class="feature-tag">Quick Access</span>
+        </div>
+      </a>
+
+      <!-- Budget vs Actual (COGS) -->
+      <a href="alpine-cogs.html" class="tool-card">
+        <div class="tool-icon">📈</div>
+        <h3>Budget vs Actual (COGS)</h3>
+        <span class="status-badge status-ready">Ready</span>
+        <p>Detailed cost of goods sold tracking. Compare budgeted vs actual across all cost categories. Fully interactive with hierarchical editing.</p>
+        <div class="tool-features">
+          <span class="feature-tag">COGS Tracking</span>
+          <span class="feature-tag">Inline Editing</span>
+          <span class="feature-tag">Variance Reports</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>© 2026 Alpine Property Group | Professional Development Toolkit</p>
+    </div>
+  </div>
+
+  <!-- Authentication -->
+  <script src="auth.js"></script>
+  <script>
+    // Require authentication
+    requireAuth();
+    
+    // Add logout button when page loads
+    window.addEventListener('DOMContentLoaded', () => {
+      addLogoutButton();
+    });
+  </script>
+</body>
+</html>
