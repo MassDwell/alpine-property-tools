@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Tracker | Alpine Property Group</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="alpine-shared.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .header {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .header h1 {
+      color: #1e3c72;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary {
+      background: #1e3c72;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #2a5298;
+      transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+    .btn-success:hover {
+      background: #218838;
+    }
+    .project-selector {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .project-selector select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .budget-grid {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .budget-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      padding: 15px;
+      background: #1e3c72;
+      color: white;
+      border-radius: 8px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .budget-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .budget-row:hover {
+      background: #e9ecef;
+    }
+    .category-name {
+      font-weight: 600;
+      color: #1e3c72;
+    }
+    .variance {
+      font-weight: 700;
+    }
+    .variance.positive {
+      color: #28a745;
+    }
+    .variance.negative {
+      color: #dc3545;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e3c72;
+      margin-bottom: 5px;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1e3c72;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    @media (max-width: 768px) {
+      .budget-header,
+      .budget-row {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const DEFAULT_CATEGORIES = [
+      'Land Acquisition',
+      'Soft Costs',
+      'Site Work',
+      'Foundation',
+      'Framing',
+      'Exterior',
+      'Mechanical',
+      'Interior Finishes',
+      'Contingency',
+      'Marketing',
+      'Closing Costs'
+    ];
+
+    function App() {
+      const [projects, setProjects] = useState([]);
+      const [selectedProjectId, setSelectedProjectId] = useState(null);
+      const [budgets, setBudgets] = useState([]);
+      const [showModal, setShowModal] = useState(false);
+      const [editingBudget, setEditingBudget] = useState(null);
+
+      useEffect(() => {
+        loadData();
+      }, []);
+
+      const loadData = () => {
+        const projectData = AlpineData.getProjects();
+        setProjects(projectData);
+        if (projectData.length > 0 && !selectedProjectId) {
+          setSelectedProjectId(projectData[0].id);
+        }
+        setBudgets(AlpineData.getBudgets());
+      };
+
+      const currentBudgets = budgets.filter(b => b.projectId === selectedProjectId);
+
+      const totalBudget = currentBudgets.reduce((sum, b) => sum + (parseFloat(b.budgeted) || 0), 0);
+      const totalActual = currentBudgets.reduce((sum, b) => sum + (parseFloat(b.actual) || 0), 0);
+      const totalVariance = totalBudget - totalActual;
+      const variancePercent = totalBudget > 0 ? (totalVariance / totalBudget) : 0;
+
+      const handleAddBudget = () => {
+        setEditingBudget(null);
+        setShowModal(true);
+      };
+
+      const handleEditBudget = (budget) => {
+        setEditingBudget(budget);
+        setShowModal(true);
+      };
+
+      const handleSaveBudget = (budgetData) => {
+        if (editingBudget) {
+          AlpineData.updateBudget(editingBudget.id, budgetData);
+        } else {
+          AlpineData.addBudget({ ...budgetData, projectId: selectedProjectId });
+        }
+        loadData();
+        setShowModal(false);
+      };
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>💰 Budget Tracker</h1>
+            <div className="nav-buttons">
+              <a href="index.html" className="btn btn-secondary">🏠 Home</a>
+              <button className="btn btn-success" onClick={handleAddBudget} disabled={!selectedProjectId}>
+                + Add Budget Item
+              </button>
+            </div>
+          </div>
+
+          <div className="project-selector">
+            <select
+              value={selectedProjectId || ''}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              <option value="">Select a project...</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {selectedProjectId && (
+            <>
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-value">{AlpineData.formatCurrency(totalBudget)}</div>
+                  <div className="stat-label">Total Budget</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{AlpineData.formatCurrency(totalActual)}</div>
+                  <div className="stat-label">Total Actual</div>
+                </div>
+                <div className="stat-card">
+                  <div className={`stat-value ${totalVariance >= 0 ? 'variance positive' : 'variance negative'}`}>
+                    {AlpineData.formatCurrency(totalVariance)}
+                  </div>
+                  <div className="stat-label">Variance</div>
+                </div>
+                <div className="stat-card">
+                  <div className={`stat-value ${totalVariance >= 0 ? 'variance positive' : 'variance negative'}`}>
+                    {AlpineData.formatPercent(variancePercent)}
+                  </div>
+                  <div className="stat-label">Variance %</div>
+                </div>
+              </div>
+
+              <div className="budget-grid">
+                <div className="budget-header">
+                  <div>Category</div>
+                  <div>Budgeted</div>
+                  <div>Actual</div>
+                  <div>Variance</div>
+                  <div>%</div>
+                </div>
+                {currentBudgets.map(budget => {
+                  const budgeted = parseFloat(budget.budgeted) || 0;
+                  const actual = parseFloat(budget.actual) || 0;
+                  const variance = budgeted - actual;
+                  const percent = budgeted > 0 ? (variance / budgeted) : 0;
+
+                  return (
+                    <div
+                      key={budget.id}
+                      className="budget-row"
+                      onClick={() => handleEditBudget(budget)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="category-name">{budget.category}</div>
+                      <div>{AlpineData.formatCurrency(budgeted)}</div>
+                      <div>{AlpineData.formatCurrency(actual)}</div>
+                      <div className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
+                        {AlpineData.formatCurrency(variance)}
+                      </div>
+                      <div className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
+                        {AlpineData.formatPercent(percent)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {showModal && (
+            <BudgetModal
+              budget={editingBudget}
+              onSave={handleSaveBudget}
+              onClose={() => setShowModal(false)}
+            />
+          )}
+        </div>
+      );
+    }
+
+    function BudgetModal({ budget, onSave, onClose }) {
+      const [formData, setFormData] = useState({
+        category: budget?.category || '',
+        budgeted: budget?.budgeted || '',
+        actual: budget?.actual || '',
+        notes: budget?.notes || ''
+      });
+
+      const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave(formData);
+      };
+
+      return (
+        <div className="modal" onClick={onClose}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">{budget ? 'Edit Budget Item' : 'New Budget Item'}</div>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Category *</label>
+                {!budget ? (
+                  <select name="category" value={formData.category} onChange={handleChange} required>
+                    <option value="">Select category...</option>
+                    {DEFAULT_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input type="text" value={formData.category} disabled />
+                )}
+              </div>
+              <div className="form-group">
+                <label>Budgeted Amount ($) *</label>
+                <input
+                  type="number"
+                  name="budgeted"
+                  value={formData.budgeted}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Actual Amount ($)</label>
+                <input
+                  type="number"
+                  name="actual"
+                  value={formData.actual}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-actions">
+                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>

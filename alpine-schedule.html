@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construction Schedule | Alpine Property Group</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="alpine-shared.js"></script>
+  <link rel="stylesheet" href="alpine-premium.css">
+  <style>
+    .project-selector {
+      background: white;
+      padding: 20px 28px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--gray-200);
+    }
+
+    .project-selector select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-family: inherit;
+      transition: all var(--transition-base);
+    }
+
+    .timeline-container {
+      background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+    }
+
+    .milestone-card {
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+      border-left: 4px solid var(--primary-600);
+      transition: all var(--transition-base);
+      cursor: pointer;
+    }
+
+    .milestone-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateX(4px);
+    }
+
+    .milestone-card.completed {
+      border-left-color: var(--success-500);
+      opacity: 0.7;
+    }
+
+    .milestone-card.critical {
+      border-left-color: var(--danger-500);
+      background: linear-gradient(to right, rgba(239, 68, 68, 0.05) 0%, var(--gray-50) 100%);
+    }
+
+    .milestone-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .milestone-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-900);
+      flex: 1;
+    }
+
+    .milestone-status {
+      padding: 4px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-pending {
+      background: var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    .status-in-progress {
+      background: rgba(14, 165, 233, 0.1);
+      color: var(--accent-500);
+    }
+
+    .status-completed {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success-500);
+    }
+
+    .milestone-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      color: var(--gray-600);
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--gray-200);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success-500), var(--success-400));
+      transition: width var(--transition-slow);
+    }
+
+    @media (max-width: 768px) {
+      .milestone-header {
+        flex-direction: column;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const DEFAULT_MILESTONES = [
+      { name: 'Permits & Approvals', duration: 60, critical: true, status: 'pending' },
+      { name: 'Site Preparation', duration: 14, critical: false, status: 'pending' },
+      { name: 'Foundation', duration: 21, critical: true, status: 'pending' },
+      { name: 'Framing', duration: 30, critical: true, status: 'pending' },
+      { name: 'Rough Mechanicals', duration: 21, critical: false, status: 'pending' },
+      { name: 'Exterior Envelope', duration: 14, critical: false, status: 'pending' },
+      { name: 'Interior Finishes', duration: 45, critical: false, status: 'pending' },
+      { name: 'Final Inspections', duration: 7, critical: true, status: 'pending' },
+      { name: 'Punch List', duration: 14, critical: false, status: 'pending' },
+      { name: 'Certificate of Occupancy', duration: 3, critical: true, status: 'pending' }
+    ];
+
+    function App() {
+      const [projects, setProjects] = useState([]);
+      const [selectedProjectId, setSelectedProjectId] = useState(null);
+      const [schedules, setSchedules] = useState([]);
+      const [showModal, setShowModal] = useState(false);
+      const [editingMilestone, setEditingMilestone] = useState(null);
+
+      useEffect(() => {
+        loadData();
+      }, []);
+
+      const loadData = () => {
+        const projectData = AlpineData.getProjects();
+        setProjects(projectData);
+        if (projectData.length > 0 && !selectedProjectId) {
+          setSelectedProjectId(projectData[0].id);
+        }
+        
+        let scheduleData = AlpineData.getAll(AlpineData.KEYS.SCHEDULES);
+        
+        // Initialize default milestones for projects without schedules
+        projectData.forEach(project => {
+          const hasSchedule = scheduleData.some(s => s.projectId === project.id);
+          if (!hasSchedule) {
+            DEFAULT_MILESTONES.forEach(milestone => {
+              scheduleData.push({
+                id: Date.now().toString() + Math.random(),
+                projectId: project.id,
+                ...milestone
+              });
+            });
+          }
+        });
+        
+        AlpineData.save(AlpineData.KEYS.SCHEDULES, scheduleData);
+        setSchedules(scheduleData);
+      };
+
+      const currentSchedule = schedules.filter(s => s.projectId === selectedProjectId);
+      const totalDuration = currentSchedule.reduce((sum, m) => sum + (m.duration || 0), 0);
+      const completed = currentSchedule.filter(m => m.status === 'completed').length;
+      const inProgress = currentSchedule.filter(m => m.status === 'in-progress').length;
+      const critical = currentSchedule.filter(m => m.critical && m.status !== 'completed').length;
+      const progressPercent = currentSchedule.length > 0 ? (completed / currentSchedule.length) : 0;
+
+      const handleMilestoneClick = (milestone) => {
+        setEditingMilestone(milestone);
+        setShowModal(true);
+      };
+
+      const handleUpdateStatus = (newStatus) => {
+        if (editingMilestone) {
+          const updated = schedules.map(s => 
+            s.id === editingMilestone.id ? { ...s, status: newStatus } : s
+          );
+          AlpineData.save(AlpineData.KEYS.SCHEDULES, updated);
+          setSchedules(updated);
+          setShowModal(false);
+        }
+      };
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>📅 Construction Schedule</h1>
+            <div className="nav-buttons">
+              <a href="index.html" className="btn btn-secondary">🏠 Home</a>
+            </div>
+          </div>
+
+          <div className="project-selector">
+            <select
+              value={selectedProjectId || ''}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              <option value="">Select a project...</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {selectedProjectId && (
+            <>
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-value">{totalDuration}</div>
+                  <div className="stat-label">Total Days</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{completed}</div>
+                  <div className="stat-label">Completed</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{inProgress}</div>
+                  <div className="stat-label">In Progress</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value" style={{color: critical > 0 ? 'var(--danger-500)' : 'var(--success-500)'}}>
+                    {critical}
+                  </div>
+                  <div className="stat-label">Critical Path Items</div>
+                </div>
+              </div>
+
+              <div className="timeline-container">
+                <div style={{marginBottom: '20px'}}>
+                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
+                    <span style={{fontWeight: 600}}>Overall Progress</span>
+                    <span style={{fontWeight: 700, color: 'var(--primary-700)'}}>
+                      {Math.round(progressPercent * 100)}%
+                    </span>
+                  </div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{width: `${progressPercent * 100}%`}}></div>
+                  </div>
+                </div>
+
+                {currentSchedule.map(milestone => (
+                  <div
+                    key={milestone.id}
+                    className={`milestone-card ${milestone.status === 'completed' ? 'completed' : ''} ${milestone.critical ? 'critical' : ''}`}
+                    onClick={() => handleMilestoneClick(milestone)}
+                  >
+                    <div className="milestone-header">
+                      <div className="milestone-name">
+                        {milestone.critical && '⚠️ '}
+                        {milestone.name}
+                      </div>
+                      <span className={`milestone-status status-${milestone.status}`}>
+                        {milestone.status.replace('-', ' ')}
+                      </span>
+                    </div>
+                    <div className="milestone-meta">
+                      <div className="meta-item">
+                        <span>⏱️</span>
+                        <span>{milestone.duration} days</span>
+                      </div>
+                      {milestone.critical && (
+                        <div className="meta-item">
+                          <span>🔴</span>
+                          <span>Critical Path</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {showModal && editingMilestone && (
+            <div className="modal" onClick={() => setShowModal(false)}>
+              <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">{editingMilestone.name}</div>
+                <div style={{marginBottom: '24px'}}>
+                  <div style={{marginBottom: '12px', color: 'var(--gray-600)'}}>
+                    Duration: {editingMilestone.duration} days
+                    {editingMilestone.critical && <span style={{color: 'var(--danger-500)', marginLeft: '12px'}}>⚠️ Critical Path</span>}
+                  </div>
+                  <div style={{fontSize: '14px', fontWeight: 600, marginBottom: '8px'}}>
+                    Update Status:
+                  </div>
+                  <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => handleUpdateStatus('pending')}
+                    >
+                      Pending
+                    </button>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleUpdateStatus('in-progress')}
+                    >
+                      In Progress
+                    </button>
+                    <button
+                      className="btn btn-success"
+                      onClick={() => handleUpdateStatus('completed')}
+                    >
+                      Completed
+                    </button>
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>

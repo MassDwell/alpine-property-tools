@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Development Pipeline | Alpine Property Group</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="alpine-shared.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .header {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .header h1 {
+      color: #1e3c72;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary {
+      background: #1e3c72;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #2a5298;
+      transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+    .btn-success:hover {
+      background: #218838;
+    }
+    .pipeline-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .pipeline-column {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .column-header {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #1e3c72;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .column-count {
+      background: #1e3c72;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .project-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid #1e3c72;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .project-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+    .project-name {
+      font-weight: 700;
+      color: #1e3c72;
+      margin-bottom: 6px;
+    }
+    .project-meta {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .project-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #28a745;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1e3c72;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #1e3c72;
+    }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1e3c72;
+      margin-bottom: 5px;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+    @media (max-width: 768px) {
+      .pipeline-board {
+        grid-template-columns: 1fr;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [projects, setProjects] = useState([]);
+      const [showModal, setShowModal] = useState(false);
+      const [editingProject, setEditingProject] = useState(null);
+
+      useEffect(() => {
+        loadProjects();
+      }, []);
+
+      const loadProjects = () => {
+        const data = AlpineData.getProjects();
+        setProjects(data);
+      };
+
+      const stages = Object.values(AlpineData.STAGES);
+
+      const getProjectsByStage = (stage) => {
+        return projects.filter(p => p.stage === stage);
+      };
+
+      const handleAddProject = () => {
+        setEditingProject(null);
+        setShowModal(true);
+      };
+
+      const handleEditProject = (project) => {
+        setEditingProject(project);
+        setShowModal(true);
+      };
+
+      const handleSaveProject = (projectData) => {
+        if (editingProject) {
+          AlpineData.updateProject(editingProject.id, projectData);
+        } else {
+          AlpineData.addProject(projectData);
+        }
+        loadProjects();
+        setShowModal(false);
+      };
+
+      const handleDeleteProject = (id) => {
+        if (confirm('Delete this project?')) {
+          AlpineData.deleteProject(id);
+          loadProjects();
+          setShowModal(false);
+        }
+      };
+
+      const totalValue = projects.reduce((sum, p) => sum + (parseFloat(p.projectValue) || 0), 0);
+      const activeProjects = projects.filter(p => !['Exit', 'Lead'].includes(p.stage)).length;
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>🏗️ Development Pipeline</h1>
+            <div className="nav-buttons">
+              <a href="index.html" className="btn btn-secondary">🏠 Home</a>
+              <button className="btn btn-success" onClick={handleAddProject}>+ Add Project</button>
+            </div>
+          </div>
+
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-value">{projects.length}</div>
+              <div className="stat-label">Total Projects</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{activeProjects}</div>
+              <div className="stat-label">Active Projects</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{AlpineData.formatCurrency(totalValue)}</div>
+              <div className="stat-label">Total Value</div>
+            </div>
+          </div>
+
+          <div className="pipeline-board">
+            {stages.map(stage => (
+              <div key={stage} className="pipeline-column">
+                <div className="column-header">
+                  {stage}
+                  <span className="column-count">{getProjectsByStage(stage).length}</span>
+                </div>
+                {getProjectsByStage(stage).map(project => (
+                  <div key={project.id} className="project-card" onClick={() => handleEditProject(project)}>
+                    <div className="project-name">{project.name}</div>
+                    <div className="project-meta">
+                      {project.address && <div>📍 {project.address}</div>}
+                      {project.targetDate && <div>📅 {AlpineData.formatDate(project.targetDate)}</div>}
+                    </div>
+                    <div className="project-value">{AlpineData.formatCurrency(project.projectValue)}</div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {showModal && (
+            <ProjectModal
+              project={editingProject}
+              onSave={handleSaveProject}
+              onDelete={handleDeleteProject}
+              onClose={() => setShowModal(false)}
+            />
+          )}
+        </div>
+      );
+    }
+
+    function ProjectModal({ project, onSave, onDelete, onClose }) {
+      const [formData, setFormData] = useState({
+        name: project?.name || '',
+        address: project?.address || '',
+        stage: project?.stage || 'Lead',
+        projectValue: project?.projectValue || '',
+        units: project?.units || '',
+        targetDate: project?.targetDate || '',
+        notes: project?.notes || ''
+      });
+
+      const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave(formData);
+      };
+
+      return (
+        <div className="modal" onClick={onClose}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">{project ? 'Edit Project' : 'New Project'}</div>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Project Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Address</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Stage *</label>
+                <select name="stage" value={formData.stage} onChange={handleChange} required>
+                  {Object.values(AlpineData.STAGES).map(stage => (
+                    <option key={stage} value={stage}>{stage}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Project Value ($)</label>
+                <input
+                  type="number"
+                  name="projectValue"
+                  value={formData.projectValue}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Units</label>
+                <input
+                  type="number"
+                  name="units"
+                  value={formData.units}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Target Date</label>
+                <input
+                  type="date"
+                  name="targetDate"
+                  value={formData.targetDate}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  rows="3"
+                />
+              </div>
+              <div className="form-actions">
+                {project && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => onDelete(project.id)}
+                  >
+                    Delete
+                  </button>
+                )}
+                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>

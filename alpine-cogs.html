@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget vs Actual (COGS) | Alpine Property Group</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="alpine-shared.js"></script>
+  <link rel="stylesheet" href="alpine-premium.css">
+  <style>
+    .project-selector {
+      background: white;
+      padding: 20px 28px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--gray-200);
+    }
+
+    .project-selector select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-family: inherit;
+      transition: all var(--transition-base);
+    }
+
+    .cogs-table {
+      background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .table-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+      gap: 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-600) 100%);
+      color: white;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+      gap: 16px;
+      padding: 16px;
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      align-items: center;
+      transition: all var(--transition-base);
+      cursor: pointer;
+    }
+
+    .table-row:hover {
+      background: var(--gray-100);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .table-row.total {
+      background: linear-gradient(to right, var(--primary-100) 0%, var(--gray-50) 100%);
+      font-weight: 700;
+      margin-top: 16px;
+      border-top: 2px solid var(--primary-300);
+      cursor: default;
+    }
+
+    .category-cell {
+      font-weight: 600;
+      color: var(--primary-900);
+    }
+
+    .chart-container {
+      background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 24px;
+    }
+
+    .chart-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary-900);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--primary-200);
+    }
+
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bar-label {
+      min-width: 150px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-700);
+    }
+
+    .bar-container {
+      flex: 1;
+      height: 32px;
+      background: var(--gray-200);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-600), var(--primary-500));
+      transition: width var(--transition-slow);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .bar-value {
+      min-width: 100px;
+      text-align: right;
+      font-weight: 600;
+      color: var(--primary-700);
+    }
+
+    @media (max-width: 968px) {
+      .table-header,
+      .table-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .cogs-table {
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const COGS_CATEGORIES = [
+      'Land Acquisition',
+      'Site Work & Utilities',
+      'Foundation',
+      'Framing & Structure',
+      'Exterior (Siding, Roofing)',
+      'Windows & Doors',
+      'Plumbing',
+      'Electrical',
+      'HVAC',
+      'Insulation',
+      'Drywall & Paint',
+      'Flooring',
+      'Kitchen & Bath',
+      'Appliances & Fixtures',
+      'Permits & Fees',
+      'Soft Costs',
+      'Contingency'
+    ];
+
+    function App() {
+      const [projects, setProjects] = useState([]);
+      const [selectedProjectId, setSelectedProjectId] = useState(null);
+      const [cogsData, setCogsData] = useState([]);
+      const [showModal, setShowModal] = useState(false);
+      const [editingItem, setEditingItem] = useState(null);
+
+      useEffect(() => {
+        loadData();
+      }, []);
+
+      const loadData = () => {
+        const projectData = AlpineData.getProjects();
+        setProjects(projectData);
+        if (projectData.length > 0 && !selectedProjectId) {
+          setSelectedProjectId(projectData[0].id);
+        }
+        
+        let cogs = AlpineData.getAll('alpine_cogs') || [];
+        
+        // Initialize with sample data for projects
+        projectData.forEach(project => {
+          const hasCogs = cogs.some(c => c.projectId === project.id);
+          if (!hasCogs) {
+            COGS_CATEGORIES.forEach(category => {
+              cogs.push({
+                id: Date.now().toString() + Math.random(),
+                projectId: project.id,
+                category,
+                budgeted: Math.floor(Math.random() * 50000) + 10000,
+                actual: Math.floor(Math.random() * 45000) + 8000,
+                committed: Math.floor(Math.random() * 40000) + 5000
+              });
+            });
+          }
+        });
+        
+        AlpineData.save('alpine_cogs', cogs);
+        setCogsData(cogs);
+      };
+
+      const currentCogs = cogsData.filter(c => c.projectId === selectedProjectId);
+
+      const totalBudgeted = currentCogs.reduce((sum, c) => sum + (parseFloat(c.budgeted) || 0), 0);
+      const totalActual = currentCogs.reduce((sum, c) => sum + (parseFloat(c.actual) || 0), 0);
+      const totalCommitted = currentCogs.reduce((sum, c) => sum + (parseFloat(c.committed) || 0), 0);
+      const totalVariance = totalBudgeted - totalActual;
+      const variancePercent = totalBudgeted > 0 ? (totalVariance / totalBudgeted) : 0;
+      const burnRate = totalBudgeted > 0 ? (totalActual / totalBudgeted) : 0;
+
+      const handleRowClick = (item) => {
+        setEditingItem(item);
+        setShowModal(true);
+      };
+
+      const handleSave = (formData) => {
+        const updated = cogsData.map(c => 
+          c.id === editingItem.id ? { ...c, ...formData } : c
+        );
+        AlpineData.save('alpine_cogs', updated);
+        setCogsData(updated);
+        setShowModal(false);
+      };
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>📈 Budget vs Actual (COGS)</h1>
+            <div className="nav-buttons">
+              <a href="index.html" className="btn btn-secondary">🏠 Home</a>
+              <button className="btn btn-success" onClick={() => window.print()}>
+                📄 Export Report
+              </button>
+            </div>
+          </div>
+
+          <div className="project-selector">
+            <select
+              value={selectedProjectId || ''}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              <option value="">Select a project...</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {selectedProjectId && (
+            <>
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-value">{AlpineData.formatCurrency(totalBudgeted)}</div>
+                  <div className="stat-label">Total Budgeted</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{AlpineData.formatCurrency(totalActual)}</div>
+                  <div className="stat-label">Total Actual</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{AlpineData.formatCurrency(totalCommitted)}</div>
+                  <div className="stat-label">Committed</div>
+                </div>
+                <div className="stat-card">
+                  <div className={`stat-value ${totalVariance >= 0 ? 'variance positive' : 'variance negative'}`}>
+                    {AlpineData.formatCurrency(totalVariance)}
+                  </div>
+                  <div className="stat-label">Variance</div>
+                </div>
+                <div className="stat-card">
+                  <div className={`stat-value ${totalVariance >= 0 ? 'variance positive' : 'variance negative'}`}>
+                    {AlpineData.formatPercent(variancePercent)}
+                  </div>
+                  <div className="stat-label">Variance %</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{AlpineData.formatPercent(burnRate)}</div>
+                  <div className="stat-label">Burn Rate</div>
+                </div>
+              </div>
+
+              <div className="cogs-table">
+                <div className="table-header">
+                  <div>Category</div>
+                  <div>Budgeted</div>
+                  <div>Committed</div>
+                  <div>Actual</div>
+                  <div>Variance</div>
+                  <div>%</div>
+                </div>
+                
+                {currentCogs.map(item => {
+                  const budgeted = parseFloat(item.budgeted) || 0;
+                  const actual = parseFloat(item.actual) || 0;
+                  const committed = parseFloat(item.committed) || 0;
+                  const variance = budgeted - actual;
+                  const percent = budgeted > 0 ? (variance / budgeted) : 0;
+
+                  return (
+                    <div key={item.id} className="table-row" onClick={() => handleRowClick(item)}>
+                      <div className="category-cell">{item.category}</div>
+                      <div>{AlpineData.formatCurrency(budgeted)}</div>
+                      <div>{AlpineData.formatCurrency(committed)}</div>
+                      <div>{AlpineData.formatCurrency(actual)}</div>
+                      <div className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
+                        {AlpineData.formatCurrency(variance)}
+                      </div>
+                      <div className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
+                        {AlpineData.formatPercent(percent)}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div className="table-row total">
+                  <div>TOTAL</div>
+                  <div>{AlpineData.formatCurrency(totalBudgeted)}</div>
+                  <div>{AlpineData.formatCurrency(totalCommitted)}</div>
+                  <div>{AlpineData.formatCurrency(totalActual)}</div>
+                  <div className={`variance ${totalVariance >= 0 ? 'positive' : 'negative'}`}>
+                    {AlpineData.formatCurrency(totalVariance)}
+                  </div>
+                  <div className={`variance ${totalVariance >= 0 ? 'positive' : 'negative'}`}>
+                    {AlpineData.formatPercent(variancePercent)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="chart-container">
+                <div className="chart-title">Budget Allocation by Category</div>
+                <div className="bar-chart">
+                  {currentCogs.slice(0, 10).map(item => {
+                    const budgeted = parseFloat(item.budgeted) || 0;
+                    const percent = totalBudgeted > 0 ? (budgeted / totalBudgeted * 100) : 0;
+                    
+                    return (
+                      <div key={item.id} className="bar-row">
+                        <div className="bar-label">{item.category}</div>
+                        <div className="bar-container">
+                          <div className="bar-fill" style={{width: `${percent}%`}}>
+                            {percent > 15 && `${percent.toFixed(1)}%`}
+                          </div>
+                        </div>
+                        <div className="bar-value">{AlpineData.formatCurrency(budgeted)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {showModal && editingItem && (
+            <COGSModal
+              item={editingItem}
+              onSave={handleSave}
+              onClose={() => setShowModal(false)}
+            />
+          )}
+        </div>
+      );
+    }
+
+    function COGSModal({ item, onSave, onClose }) {
+      const [formData, setFormData] = useState({
+        budgeted: item.budgeted || 0,
+        committed: item.committed || 0,
+        actual: item.actual || 0
+      });
+
+      const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave(formData);
+      };
+
+      const variance = formData.budgeted - formData.actual;
+
+      return (
+        <div className="modal" onClick={onClose}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">{item.category}</div>
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Budgeted Amount ($)</label>
+                <input
+                  type="number"
+                  name="budgeted"
+                  value={formData.budgeted}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Committed Amount ($)</label>
+                <input
+                  type="number"
+                  name="committed"
+                  value={formData.committed}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Actual Amount ($)</label>
+                <input
+                  type="number"
+                  name="actual"
+                  value={formData.actual}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div style={{
+                padding: '16px',
+                background: 'var(--gray-50)',
+                borderRadius: 'var(--radius-md)',
+                marginTop: '16px'
+              }}>
+                <div style={{fontWeight: 600, marginBottom: '8px'}}>Variance:</div>
+                <div style={{
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  color: variance >= 0 ? 'var(--success-500)' : 'var(--danger-500)'
+                }}>
+                  {AlpineData.formatCurrency(variance)}
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>

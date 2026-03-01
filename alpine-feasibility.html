@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feasibility Analysis | Alpine Property Group</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="alpine-shared.js"></script>
+  <link rel="stylesheet" href="alpine-premium.css">
+  <style>
+    .calculator-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .input-section {
+      background: linear-gradient(to bottom, #ffffff 0%, #fafbfc 100%);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-200);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-900);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--primary-200);
+    }
+
+    .results-section {
+      background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-600) 100%);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      box-shadow: var(--shadow-xl);
+      color: white;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .result-item:last-child {
+      border-bottom: none;
+    }
+
+    .result-label {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .result-value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .result-value.highlight {
+      font-size: 32px;
+      color: var(--success-400);
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 968px) {
+      .calculator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    function App() {
+      const [inputs, setInputs] = useState({
+        purchasePrice: 500000,
+        closingCosts: 15000,
+        constructionCosts: 300000,
+        softCosts: 50000,
+        contingency: 25000,
+        units: 4,
+        avgRent: 2500,
+        exitCapRate: 0.05,
+        vacancy: 0.05,
+        expenses: 0.35
+      });
+
+      const handleChange = (e) => {
+        const { name, value } = e.target;
+        setInputs(prev => ({
+          ...prev,
+          [name]: parseFloat(value) || 0
+        }));
+      };
+
+      // Calculations
+      const totalInvestment = inputs.purchasePrice + inputs.closingCosts + inputs.constructionCosts + 
+                             inputs.softCosts + inputs.contingency;
+      
+      const grossAnnualRent = inputs.units * inputs.avgRent * 12;
+      const effectiveRent = grossAnnualRent * (1 - inputs.vacancy);
+      const noi = effectiveRent * (1 - inputs.expenses);
+      
+      const exitValue = noi / inputs.exitCapRate;
+      const profit = exitValue - totalInvestment;
+      const roi = totalInvestment > 0 ? (profit / totalInvestment) : 0;
+      const devYield = totalInvestment > 0 ? (profit / totalInvestment) : 0;
+      const cashOnCash = totalInvestment > 0 ? (noi / totalInvestment) : 0;
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>📊 Feasibility Analysis</h1>
+            <div className="nav-buttons">
+              <a href="index.html" className="btn btn-secondary">🏠 Home</a>
+              <button className="btn btn-success" onClick={() => window.print()}>
+                📄 Export PDF
+              </button>
+            </div>
+          </div>
+
+          <div className="calculator-grid">
+            <div className="input-section">
+              <div className="section-title">Acquisition Costs</div>
+              <div className="form-group">
+                <label>Purchase Price ($)</label>
+                <input
+                  type="number"
+                  name="purchasePrice"
+                  value={inputs.purchasePrice}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Closing Costs ($)</label>
+                <input
+                  type="number"
+                  name="closingCosts"
+                  value={inputs.closingCosts}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="section-title" style={{marginTop: '24px'}}>Development Costs</div>
+              <div className="form-group">
+                <label>Construction Costs ($)</label>
+                <input
+                  type="number"
+                  name="constructionCosts"
+                  value={inputs.constructionCosts}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Soft Costs ($)</label>
+                <input
+                  type="number"
+                  name="softCosts"
+                  value={inputs.softCosts}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Contingency ($)</label>
+                <input
+                  type="number"
+                  name="contingency"
+                  value={inputs.contingency}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="input-section">
+              <div className="section-title">Revenue Assumptions</div>
+              <div className="form-group">
+                <label>Number of Units</label>
+                <input
+                  type="number"
+                  name="units"
+                  value={inputs.units}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Average Rent per Unit ($/month)</label>
+                <input
+                  type="number"
+                  name="avgRent"
+                  value={inputs.avgRent}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Vacancy Rate (%)</label>
+                <input
+                  type="number"
+                  name="vacancy"
+                  value={inputs.vacancy * 100}
+                  onChange={(e) => setInputs({...inputs, vacancy: parseFloat(e.target.value) / 100})}
+                  step="0.1"
+                />
+              </div>
+
+              <div className="section-title" style={{marginTop: '24px'}}>Exit Assumptions</div>
+              <div className="form-group">
+                <label>Operating Expenses (% of Income)</label>
+                <input
+                  type="number"
+                  name="expenses"
+                  value={inputs.expenses * 100}
+                  onChange={(e) => setInputs({...inputs, expenses: parseFloat(e.target.value) / 100})}
+                  step="0.1"
+                />
+              </div>
+              <div className="form-group">
+                <label>Exit Cap Rate (%)</label>
+                <input
+                  type="number"
+                  name="exitCapRate"
+                  value={inputs.exitCapRate * 100}
+                  onChange={(e) => setInputs({...inputs, exitCapRate: parseFloat(e.target.value) / 100})}
+                  step="0.1"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="results-section">
+            <div className="section-title" style={{color: 'white', borderColor: 'rgba(255,255,255,0.3)'}}>
+              Financial Analysis
+            </div>
+            <div className="result-item">
+              <div className="result-label">Total Investment</div>
+              <div className="result-value">{AlpineData.formatCurrency(totalInvestment)}</div>
+            </div>
+            <div className="result-item">
+              <div className="result-label">Gross Annual Rent</div>
+              <div className="result-value">{AlpineData.formatCurrency(grossAnnualRent)}</div>
+            </div>
+            <div className="result-item">
+              <div className="result-label">Net Operating Income (NOI)</div>
+              <div className="result-value">{AlpineData.formatCurrency(noi)}</div>
+            </div>
+            <div className="result-item">
+              <div className="result-label">Projected Exit Value</div>
+              <div className="result-value">{AlpineData.formatCurrency(exitValue)}</div>
+            </div>
+            <div className="result-item" style={{paddingTop: '24px', marginTop: '16px', borderTop: '2px solid rgba(255,255,255,0.3)'}}>
+              <div className="result-label" style={{fontSize: '16px', fontWeight: 700}}>Total Profit</div>
+              <div className={`result-value highlight ${profit >= 0 ? '' : 'negative'}`}>
+                {AlpineData.formatCurrency(profit)}
+              </div>
+            </div>
+            <div className="result-item">
+              <div className="result-label" style={{fontSize: '16px', fontWeight: 700}}>Return on Investment</div>
+              <div className={`result-value highlight ${roi >= 0 ? '' : 'negative'}`}>
+                {AlpineData.formatPercent(roi)}
+              </div>
+            </div>
+            <div className="result-item">
+              <div className="result-label">Development Yield</div>
+              <div className="result-value">{AlpineData.formatPercent(devYield)}</div>
+            </div>
+            <div className="result-item">
+              <div className="result-label">Cash-on-Cash Return</div>
+              <div className="result-value">{AlpineData.formatPercent(cashOnCash)}</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
