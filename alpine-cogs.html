@@ -1762,8 +1762,11 @@
                 // Show $0 for excluded items, actual values for included
                 const displayEstimated = isIncluded ? item.estimated : 0;
                 const displayActual = isIncluded ? item.actual : 0;
-                const displayVariance = isIncluded ? item.variance : 0;
-                const displayVariancePct = isIncluded ? item.variancePct : 0;
+                
+                // Calculate variance on-the-fly (don't rely on stored values)
+                const varianceCalc = calculateVariance(displayEstimated, displayActual);
+                const displayVariance = isIncluded ? varianceCalc.variance : 0;
+                const displayVariancePct = isIncluded ? varianceCalc.variancePct : 0;
                 
                 const varianceClass = displayVariancePct < -2 ? 'variance-positive' : 
                                      displayVariancePct > 2 ? 'variance-negative' : 
