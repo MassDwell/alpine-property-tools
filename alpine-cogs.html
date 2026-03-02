@@ -2342,15 +2342,37 @@
                     type: 'personal'
                 }));
                 
-                // Shared projects (where user has permission)
-                const sharedSnap = await window.db.collection('shared_projects')
-                    .where(`permissions.${email}`, 'in', ['view', 'edit', 'owner'])
+                // Shared projects (where user is owner or has permission)
+                // Query 1: Projects owned by this user
+                const ownedSnap = await window.db.collection('shared_projects')
+                    .where('owner', '==', email)
                     .get();
-                const shared = sharedSnap.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    type: 'shared'
-                }));
+                
+                // Query 2: Projects where user has permission (not owner)
+                const permittedSnap = await window.db.collection('shared_projects')
+                    .where(`permissions.${email}`, 'in', ['view', 'edit'])
+                    .get();
+                
+                // Combine and deduplicate
+                const sharedMap = new Map();
+                ownedSnap.docs.forEach(doc => {
+                    sharedMap.set(doc.id, {
+                        id: doc.id,
+                        ...doc.data(),
+                        type: 'shared'
+                    });
+                });
+                permittedSnap.docs.forEach(doc => {
+                    if (!sharedMap.has(doc.id)) {
+                        sharedMap.set(doc.id, {
+                            id: doc.id,
+                            ...doc.data(),
+                            type: 'shared'
+                        });
+                    }
+                });
+                
+                const shared = Array.from(sharedMap.values());
                 
                 appData.projects = [...personal, ...shared];
                 
