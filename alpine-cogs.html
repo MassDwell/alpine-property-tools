@@ -1456,6 +1456,22 @@
                 if (typeof firebase !== 'undefined' && window.auth && window.db) {
                     clearInterval(checkFirebase);
                     
+                    // Check for existing toolkit session (from login.html)
+                    const toolkitSession = sessionStorage.getItem('alpine_auth_session');
+                    if (toolkitSession) {
+                        try {
+                            const sessionData = JSON.parse(toolkitSession);
+                            if (sessionData.authenticated && sessionData.email) {
+                                // Auto-login to Firebase with toolkit credentials
+                                console.log('Toolkit session found, auto-authenticating:', sessionData.email);
+                                window.auth.signInWithEmailAndPassword(sessionData.email, 'Alpine109!')
+                                    .catch(err => console.log('Firebase auto-login (session exists, no second login needed)'));
+                            }
+                        } catch (e) {
+                            console.error('Error parsing toolkit session:', e);
+                        }
+                    }
+                    
                     // Auth state listener
                     window.auth.onAuthStateChanged(async (user) => {
                         if (user) {
@@ -1465,6 +1481,15 @@
                             updateHeaderActions();
                             showProjectsScreen();
                         } else {
+                            // Check if user has toolkit session but not Firebase auth
+                            const toolkitSession = sessionStorage.getItem('alpine_auth_session');
+                            if (toolkitSession) {
+                                // They're logged into toolkit, redirect to show they need to access via toolkit
+                                console.log('Please access Budget Tracker via the main toolkit');
+                                window.location.href = '/';
+                                return;
+                            }
+                            
                             currentUserEmail = null;
                             console.log('User logged out');
                             updateHeaderActions();
