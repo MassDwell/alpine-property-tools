@@ -2625,9 +2625,14 @@
         }
 
         // Open edit project modal
-        function openEditProjectModal() {
+        window.openEditProjectModal = function() {
             const project = appData.projects.find(p => p.id === currentProjectId);
-            if (!project) return;
+            if (!project) {
+                console.error('No project found with ID:', currentProjectId);
+                return;
+            }
+            
+            console.log('Opening edit modal for project:', project.name);
             
             // Populate form with current project data
             document.getElementById('edit-project-name').value = project.name || '';
@@ -2639,7 +2644,7 @@
             document.getElementById('edit-project-status').value = project.status || 'active';
             
             document.getElementById('edit-project-modal').classList.add('active');
-        }
+        };
 
         // Handle edit project form submission
         async function handleEditProject(e) {
