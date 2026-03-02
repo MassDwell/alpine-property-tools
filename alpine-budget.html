@@ -288,6 +288,14 @@
         setShowModal(false);
       };
 
+      const handleDeleteBudget = (budgetId) => {
+        if (confirm('Delete this budget item?')) {
+          AlpineData.deleteBudget(budgetId);
+          loadData();
+          setShowModal(false);
+        }
+      };
+
       return (
         <div className="container">
           <div className="header">
@@ -378,6 +386,7 @@
             <BudgetModal
               budget={editingBudget}
               onSave={handleSaveBudget}
+              onDelete={handleDeleteBudget}
               onClose={() => setShowModal(false)}
             />
           )}
@@ -385,7 +394,7 @@
       );
     }
 
-    function BudgetModal({ budget, onSave, onClose }) {
+    function BudgetModal({ budget, onSave, onDelete, onClose }) {
       const [formData, setFormData] = useState({
         category: budget?.category || '',
         budgeted: budget?.budgeted || '',
@@ -441,6 +450,16 @@
                 />
               </div>
               <div className="form-actions">
+                {budget && (
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => onDelete(budget.id)}
+                    style={{ marginRight: 'auto', background: '#dc2626' }}
+                  >
+                    🗑️ Delete
+                  </button>
+                )}
                 <button type="button" className="btn btn-secondary" onClick={onClose}>
                   Cancel
                 </button>

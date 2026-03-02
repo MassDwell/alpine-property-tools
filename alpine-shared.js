@@ -129,6 +129,12 @@ const AlpineData = {
     return null;
   },
 
+  deleteBudget(id) {
+    const budgets = this.getBudgets();
+    const filtered = budgets.filter(b => b.id !== id);
+    return this.saveBudgets(filtered);
+  },
+
   // Utility functions
   formatCurrency(value) {
     return new Intl.NumberFormat('en-US', {
