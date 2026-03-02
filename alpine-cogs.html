@@ -734,6 +734,35 @@
         .empty-state-text {
             font-size: 15px;
         }
+
+        /* Toast Notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 10000;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .toast-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Share Modal Styling */
+        .share-users label:hover {
+            border-color: var(--alpine-medium);
+            background: var(--alpine-bg);
+        }
     </style>
 </head>
 <body>
@@ -751,18 +780,53 @@
         <div id="projects-screen" class="screen active">
             <div class="projects-header">
                 <h2>Your Projects</h2>
-                <button class="btn btn-primary" onclick="showNewProjectModal()">
-                    + New Project
-                </button>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary" onclick="importProject()">
+                        📥 Import Project
+                    </button>
+                    <button class="btn btn-primary" onclick="showNewProjectModal()">
+                        + New Project
+                    </button>
+                </div>
             </div>
             <div id="projects-grid" class="projects-grid"></div>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen active">
+            <div style="max-width: 500px; margin: 100px auto; background: white; padding: 48px; border-radius: 16px; box-shadow: var(--shadow-lg);">
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <img src="assets/alpine-logo.png" alt="Alpine Property Group" style="height: 60px; margin-bottom: 16px;">
+                    <h2 style="font-size: 28px; font-weight: 700; color: var(--alpine-dark); margin-bottom: 8px;">Welcome Back</h2>
+                    <p style="color: var(--alpine-gray);">Sign in to access your projects</p>
+                </div>
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="login-email" required 
+                               placeholder="you@alpinepropertygroupllc.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 24px;">
+                        Sign In
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- Project Detail Screen -->
         <div id="project-detail-screen" class="screen">
             <div class="project-detail-header">
-                <div class="back-button" onclick="showProjectsScreen()">
-                    ← Back to Projects
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="back-button" onclick="showProjectsScreen()">
+                        ← Back to Projects
+                    </div>
+                    <button class="btn btn-small btn-secondary" onclick="openShareModal()">
+                        🔗 Share Project
+                    </button>
                 </div>
                 <div class="project-detail-title" id="detail-project-name"></div>
                 <div id="detail-project-address" class="project-address"></div>
@@ -783,6 +847,9 @@
                 </button>
                 <button class="btn btn-small btn-secondary" onclick="exportToCSV()">
                     📊 Export to CSV
+                </button>
+                <button class="btn btn-small btn-secondary" onclick="exportProject(currentProjectId)">
+                    📤 Export Project
                 </button>
                 <button class="btn btn-small btn-danger" onclick="deleteProject()">
                     🗑️ Delete Project
@@ -924,6 +991,47 @@
                     <button type="submit" class="btn btn-primary">Add Line Item</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Share Project Modal -->
+    <div id="share-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Share Project</div>
+            <p style="color: var(--alpine-gray); margin-bottom: 24px;">
+                Choose who can access this project and their permission level:
+            </p>
+            
+            <div class="share-users" style="display: flex; flex-direction: column; gap: 16px;">
+                <label style="display: flex; align-items: center; gap: 12px; padding: 16px; border: 2px solid var(--alpine-light-gray); border-radius: 8px; cursor: pointer;">
+                    <input type="checkbox" id="share-bryan" style="width: 18px; height: 18px; cursor: pointer;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--alpine-dark);">Bryan</div>
+                        <div style="font-size: 13px; color: var(--alpine-gray);">bryan@alpinepropertygroupllc.com</div>
+                    </div>
+                    <select id="perm-bryan" class="form-input" style="width: 150px;">
+                        <option value="view">View Only</option>
+                        <option value="edit">Can Edit</option>
+                    </select>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 12px; padding: 16px; border: 2px solid var(--alpine-light-gray); border-radius: 8px; cursor: pointer;">
+                    <input type="checkbox" id="share-brian" style="width: 18px; height: 18px; cursor: pointer;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--alpine-dark);">Brian Vettori</div>
+                        <div style="font-size: 13px; color: var(--alpine-gray);">brian.vettori@alpinepropertygroupllc.com</div>
+                    </div>
+                    <select id="perm-brian" class="form-input" style="width: 150px;">
+                        <option value="view">View Only</option>
+                        <option value="edit">Can Edit</option>
+                    </select>
+                </label>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeShareModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveSharing()">Save Changes</button>
+            </div>
         </div>
     </div>
 
@@ -1243,15 +1351,25 @@
             }
         }
 
-        // Save data to localStorage
+        // Save data to localStorage and Firebase
         function saveData() {
+            // Always save to localStorage as backup
             localStorage.setItem('alpine-project-tracker', JSON.stringify(appData));
+            
+            // Also save to Firebase if logged in
+            if (window.auth && auth.currentUser && currentProjectId) {
+                const project = appData.projects.find(p => p.id === currentProjectId);
+                if (project) {
+                    saveProjectToFirebase(project).catch(err => {
+                        console.error('Background save to Firebase failed:', err);
+                    });
+                }
+            }
         }
 
         // Initialize app
         function init() {
             loadData();
-            renderProjects();
             
             // Set default date to today
             document.getElementById('new-project-date').valueAsDate = new Date();
@@ -1259,6 +1377,63 @@
             // Form handlers
             document.getElementById('new-project-form').addEventListener('submit', handleNewProject);
             document.getElementById('add-lineitem-form').addEventListener('submit', handleAddLineItem);
+            
+            // Setup Firebase auth listener (waits for Firebase SDK to load)
+            setupFirebaseAuth();
+        }
+        
+        // Setup Firebase authentication listener
+        function setupFirebaseAuth() {
+            // Wait for Firebase to be loaded
+            const checkFirebase = setInterval(() => {
+                if (typeof firebase !== 'undefined' && window.auth && window.db) {
+                    clearInterval(checkFirebase);
+                    
+                    // Auth state listener
+                    window.auth.onAuthStateChanged(async (user) => {
+                        if (user) {
+                            currentUserEmail = user.email;
+                            console.log('User logged in:', currentUserEmail);
+                            await loadUserProjects();
+                            updateHeaderActions();
+                            showProjectsScreen();
+                        } else {
+                            currentUserEmail = null;
+                            console.log('User logged out');
+                            updateHeaderActions();
+                            showLoginScreen();
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        // Handle login form submission
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            login(email, password);
+        }
+
+        // Update header actions with user info
+        function updateHeaderActions() {
+            const headerActions = document.getElementById('header-actions');
+            
+            if (currentUserEmail) {
+                headerActions.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <span style="font-size: 14px; color: var(--alpine-gray);">
+                            ${currentUserEmail}
+                        </span>
+                        <button class="btn btn-small btn-secondary" onclick="logout()">
+                            Logout
+                        </button>
+                    </div>
+                `;
+            } else {
+                headerActions.innerHTML = '';
+            }
         }
 
         // Generate unique ID
@@ -1555,8 +1730,6 @@
             const totalVarianceClass = totalVariancePct < -2 ? 'variance-positive' : totalVariancePct > 2 ? 'variance-negative' : 'variance-neutral';
             
             const totalBudget = totalEstimated;
-
-            const totalBudget = totalEstimated;
             
             document.getElementById('totals-tbody').innerHTML = `
                 <tr class="totals-row">
@@ -1821,6 +1994,56 @@
             window.URL.revokeObjectURL(url);
         }
 
+        // Export project as JSON
+        function exportProject(projectId) {
+            const project = appData.projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            const exportData = {
+                ...project,
+                exportedBy: currentUserEmail || 'unknown',
+                exportedAt: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${project.name.replace(/\s+/g, '-')}-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Import project from JSON
+        function importProject() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        imported.id = generateId(); // New ID
+                        imported.importedBy = currentUserEmail || 'unknown';
+                        imported.importedAt = new Date().toISOString();
+                        appData.projects.push(imported);
+                        saveData();
+                        renderProjects();
+                        alert(`Project "${imported.name}" imported successfully`);
+                    } catch (err) {
+                        alert('Invalid project file');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
         // Delete project
         function deleteProject() {
             if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) {
@@ -1836,6 +2059,8 @@
         function showProjectsScreen() {
             currentProjectId = null;
             renderProjects();
+            updateHeaderActions();
+            document.getElementById('login-screen').classList.remove('active');
             document.getElementById('project-detail-screen').classList.remove('active');
             document.getElementById('projects-screen').classList.add('active');
         }
@@ -1854,11 +2079,10 @@
         }
 
         // Handle new project form
-        function handleNewProject(e) {
+        async function handleNewProject(e) {
             e.preventDefault();
 
-            const project = {
-                id: generateId(),
+            const projectData = {
                 name: document.getElementById('new-project-name').value,
                 address: document.getElementById('new-project-address').value,
                 type: 'ground-up-condo',
@@ -1869,14 +2093,25 @@
                 costs: createDefaultLineItems()
             };
 
-            appData.projects.push(project);
-            saveData();
+            // Use Firebase if available, otherwise localStorage
+            if (window.auth && auth.currentUser) {
+                const project = await createNewProjectFirebase(projectData);
+                if (project) {
+                    await loadUserProjects();
+                }
+            } else {
+                const project = {
+                    id: generateId(),
+                    ...projectData
+                };
+                appData.projects.push(project);
+                saveData();
+                renderProjects();
+            }
             
             closeModal('new-project-modal');
             document.getElementById('new-project-form').reset();
             document.getElementById('new-project-date').valueAsDate = new Date();
-            
-            renderProjects();
         }
 
         // Handle add line item form
@@ -1922,6 +2157,325 @@
 
         // Initialize on load
         document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase configuration (alpine-property-toolkit)
+        // Updated: March 2, 2026
+        const firebaseConfig = {
+            apiKey: "AIzaSyCvh1s-yTDv0vgBnBq-pfxk1SmW89hUduU",
+            authDomain: "alpine-property-toolkit.firebaseapp.com",
+            projectId: "alpine-property-toolkit",
+            storageBucket: "alpine-property-toolkit.firebasestorage.app",
+            messagingSenderId: "814436229780",
+            appId: "1:814436229780:web:ff8a15569a0ca2eecd0a81",
+            measurementId: "G-GF04BD7MWW"
+        };
+
+        // Initialize Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            window.auth = firebase.auth();
+            window.db = firebase.firestore();
+
+            // Enable offline persistence
+            window.db.enablePersistence()
+                .catch((err) => {
+                    if (err.code == 'failed-precondition') {
+                        console.warn('Multiple tabs open - persistence only works in one tab');
+                    } else if (err.code == 'unimplemented') {
+                        console.warn('Browser does not support offline persistence');
+                    }
+                });
+
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            alert('Firebase not configured. Please update firebaseConfig with your project credentials.');
+        }
+
+        // Track current user email
+        let currentUserEmail = null;
+
+        // Firestore listeners for cleanup
+        let unsubscribers = [];
+
+        // Auth state listener moved to init() function in main script
+
+        // Load user's projects (personal + shared)
+        window.loadUserProjects = async function() {
+            if (!window.auth.currentUser) return;
+            
+            const email = window.auth.currentUser.email;
+            
+            try {
+                // Personal projects
+                const personalSnap = await window.db.collection('users').doc(email).collection('personal_projects').get();
+                const personal = personalSnap.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    type: 'personal'
+                }));
+                
+                // Shared projects (where user has permission)
+                const sharedSnap = await window.db.collection('shared_projects')
+                    .where(`permissions.${email}`, 'in', ['view', 'edit', 'owner'])
+                    .get();
+                const shared = sharedSnap.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    type: 'shared'
+                }));
+                
+                appData.projects = [...personal, ...shared];
+                
+                // Subscribe to shared projects for real-time updates
+                subscribeToSharedProjects();
+                
+                renderProjects();
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                alert('Error loading projects from cloud');
+            }
+        }
+
+        // Save project (auto-route to personal or shared)
+        async function saveProjectToFirebase(project) {
+            if (!auth.currentUser) return;
+            
+            const email = auth.currentUser.email;
+            
+            try {
+                if (project.type === 'shared') {
+                    // Update shared project
+                    await window.db.collection('shared_projects').doc(project.id).update({
+                        ...project,
+                        modified: firebase.firestore.FieldValue.serverTimestamp(),
+                        modifiedBy: email
+                    });
+                } else {
+                    // Save to personal
+                    await window.db.collection('users').doc(email).collection('personal_projects')
+                        .doc(project.id).set(project);
+                }
+            } catch (error) {
+                console.error('Error saving project:', error);
+                alert('Error saving project to cloud');
+            }
+        }
+
+        // Create new project in Firestore
+        async function createNewProjectFirebase(projectData) {
+            if (!auth.currentUser) return;
+            
+            const email = auth.currentUser.email;
+            const projectId = generateId();
+            
+            const newProject = {
+                ...projectData,
+                id: projectId,
+                created: firebase.firestore.FieldValue.serverTimestamp(),
+                modified: firebase.firestore.FieldValue.serverTimestamp(),
+                createdBy: email,
+                type: 'personal'
+            };
+            
+            try {
+                await window.db.collection('users').doc(email).collection('personal_projects')
+                    .doc(projectId).set(newProject);
+                
+                return newProject;
+            } catch (error) {
+                console.error('Error creating project:', error);
+                alert('Error creating project in cloud');
+                return null;
+            }
+        }
+
+        // Share project with other users
+        async function shareProject(projectId, permissions) {
+            if (!auth.currentUser) return;
+            
+            const email = auth.currentUser.email;
+            const project = appData.projects.find(p => p.id === projectId);
+            
+            if (!project) return;
+            
+            try {
+                // Move from personal to shared
+                if (project.type === 'personal') {
+                    // Copy to shared collection
+                    await window.db.collection('shared_projects').doc(projectId).set({
+                        ...project,
+                        owner: email,
+                        permissions: {
+                            [email]: 'owner',
+                            ...permissions
+                        },
+                        type: 'shared',
+                        shared: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Delete from personal
+                    await window.db.collection('users').doc(email).collection('personal_projects')
+                        .doc(projectId).delete();
+                } else {
+                    // Update existing shared project
+                    await window.db.collection('shared_projects').doc(projectId).update({
+                        permissions: {
+                            [project.owner]: 'owner',
+                            ...permissions
+                        }
+                    });
+                }
+                
+                await loadUserProjects();
+                showNotification('Project sharing updated');
+            } catch (error) {
+                console.error('Error sharing project:', error);
+                alert('Error sharing project');
+            }
+        }
+
+        // Subscribe to shared projects for real-time updates
+        function subscribeToSharedProjects() {
+            // Unsubscribe from old listeners
+            unsubscribers.forEach(unsub => unsub());
+            unsubscribers = [];
+            
+            // Subscribe to shared projects
+            const sharedProjects = appData.projects.filter(p => p.type === 'shared');
+            sharedProjects.forEach(p => {
+                const unsubscribe = subscribeToProject(p.id);
+                unsubscribers.push(unsubscribe);
+            });
+        }
+
+        // Listen for changes to a specific shared project
+        function subscribeToProject(projectId) {
+            return db.collection('shared_projects').doc(projectId).onSnapshot((doc) => {
+                if (!doc.exists) return;
+                
+                const data = doc.data();
+                
+                if (data && data.modifiedBy !== auth.currentUser.email) {
+                    // Someone else edited
+                    showNotification(`Project updated by ${data.modifiedBy}`);
+                    
+                    // Update local copy
+                    const idx = appData.projects.findIndex(p => p.id === projectId);
+                    if (idx !== -1) {
+                        appData.projects[idx] = {id: doc.id, ...data};
+                        
+                        // Refresh if viewing this project
+                        if (currentProjectId === projectId) {
+                            renderCostTable(appData.projects[idx]);
+                        }
+                    }
+                }
+            }, (error) => {
+                console.error('Error listening to project:', error);
+            });
+        }
+
+        // Show notification toast
+        function showNotification(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Login function
+        async function login(email, password) {
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                currentUserEmail = userCredential.user.email;
+                await loadUserProjects();
+                updateHeaderActions();
+                showProjectsScreen();
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Invalid email or password');
+            }
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                // Unsubscribe from all listeners
+                unsubscribers.forEach(unsub => unsub());
+                unsubscribers = [];
+                
+                await auth.signOut();
+                currentUserEmail = null;
+                appData.projects = [];
+                updateHeaderActions();
+                showLoginScreen();
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Error logging out');
+            }
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('projects-screen').classList.remove('active');
+            document.getElementById('project-detail-screen').classList.remove('active');
+            document.getElementById('login-screen').classList.add('active');
+        }
+
+        // Open share modal
+        function openShareModal() {
+            const project = appData.projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            
+            // Populate current sharing state
+            if (project.permissions) {
+                document.getElementById('share-bryan').checked = !!project.permissions['bryan@alpinepropertygroupllc.com'];
+                document.getElementById('perm-bryan').value = project.permissions['bryan@alpinepropertygroupllc.com'] || 'view';
+                
+                document.getElementById('share-brian').checked = !!project.permissions['brian.vettori@alpinepropertygroupllc.com'];
+                document.getElementById('perm-brian').value = project.permissions['brian.vettori@alpinepropertygroupllc.com'] || 'view';
+            }
+            
+            document.getElementById('share-modal').classList.add('active');
+        }
+
+        // Close share modal
+        function closeShareModal() {
+            document.getElementById('share-modal').classList.remove('active');
+        }
+
+        // Save sharing settings
+        async function saveSharing() {
+            const permissions = {};
+            
+            if (document.getElementById('share-bryan').checked) {
+                permissions['bryan@alpinepropertygroupllc.com'] = document.getElementById('perm-bryan').value;
+            }
+            
+            if (document.getElementById('share-brian').checked) {
+                permissions['brian.vettori@alpinepropertygroupllc.com'] = document.getElementById('perm-brian').value;
+            }
+            
+            await shareProject(currentProjectId, permissions);
+            closeShareModal();
+        }
     </script>
 </body>
 </html>
