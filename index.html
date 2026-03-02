@@ -419,7 +419,7 @@
       </a>
 
       <!-- Budget vs Actual (COGS) -->
-      <a href="alpine-cogs.html" class="tool-card">
+      <a href="alpine-cogs.html" class="tool-card" onclick="window.location.href='alpine-cogs.html'; return false;">
         <div class="tool-icon">📈</div>
         <h3>Budget Tracker</h3>
         <span class="status-badge status-ready">Ready</span>
@@ -448,17 +448,6 @@
     // Add logout button when page loads
     window.addEventListener('DOMContentLoaded', () => {
       addLogoutButton();
-      
-      // Ensure tool cards are clickable (force navigation)
-      document.querySelectorAll('.tool-card').forEach(card => {
-        card.addEventListener('click', function(e) {
-          e.preventDefault();
-          const href = this.getAttribute('href');
-          if (href) {
-            window.location.href = href;
-          }
-        });
-      });
     });
   </script>
 </body>
