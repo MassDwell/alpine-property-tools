@@ -844,6 +844,14 @@
             </div>
 
             <div class="controls">
+                <div style="flex: 1; max-width: 400px;">
+                    <input 
+                        type="text" 
+                        id="lineItemSearch" 
+                        placeholder="🔍 Search line items..."
+                        onkeyup="filterLineItems()"
+                        style="width: 100%; padding: 10px 16px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px;">
+                </div>
                 <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; cursor: pointer;">
                     <input type="checkbox" id="showExcludedItems" checked onchange="toggleExcludedVisibility()" 
                            style="width: 18px; height: 18px; cursor: pointer;">
@@ -1897,6 +1905,36 @@
             } else {
                 document.body.classList.add('hide-excluded');
             }
+        }
+
+        // Filter line items based on search query
+        function filterLineItems() {
+            const searchInput = document.getElementById('lineItemSearch');
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            // Get all line item rows
+            const rows = document.querySelectorAll('.cost-table tbody tr');
+            
+            if (!searchTerm) {
+                // Show all rows if search is empty
+                rows.forEach(row => row.style.display = '');
+                return;
+            }
+            
+            // Filter rows based on search term
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length === 0) return; // Skip header rows
+                
+                // Search in: line item name (cell 1), notes (cell 5)
+                const itemName = cells[1]?.textContent?.toLowerCase() || '';
+                const notes = cells[5]?.textContent?.toLowerCase() || '';
+                
+                // Check if search term matches any field
+                const matches = itemName.includes(searchTerm) || notes.includes(searchTerm);
+                
+                row.style.display = matches ? '' : 'none';
+            });
         }
 
         // Edit cell
