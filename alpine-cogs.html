@@ -406,6 +406,37 @@
             display: none;
         }
 
+        /* Excluded item styling */
+        .cost-table tbody tr.excluded {
+            opacity: 0.5;
+            background: #f9f9f9;
+        }
+
+        .cost-table tbody tr.excluded .item-name {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .cost-table tbody tr.excluded .amount {
+            color: #ccc;
+        }
+
+        .cost-table tbody tr.excluded .excluded-label {
+            color: #999;
+            font-size: 11px;
+            font-style: italic;
+            margin-left: 8px;
+        }
+
+        .cost-table tbody tr.included {
+            /* Normal state */
+        }
+
+        /* Hide excluded items when filter is unchecked */
+        body.hide-excluded .cost-table tbody tr.excluded {
+            display: none;
+        }
+
         .cost-table td {
             padding: 16px 24px;
             font-size: 14px;
@@ -739,6 +770,11 @@
             </div>
 
             <div class="controls">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; cursor: pointer;">
+                    <input type="checkbox" id="showExcludedItems" checked onchange="toggleExcludedVisibility()" 
+                           style="width: 18px; height: 18px; cursor: pointer;">
+                    Show excluded items
+                </label>
                 <button class="btn btn-small btn-secondary" onclick="toggleAllLineItems()">
                     Toggle All Line Items
                 </button>
@@ -1433,12 +1469,22 @@
             const totalBudget = project.costs.reduce((sum, item) => sum + item.estimated, 0);
             
             tbody.innerHTML = items.map(item => {
-                const varianceClass = item.variancePct < -2 ? 'variance-positive' : 
-                                     item.variancePct > 2 ? 'variance-negative' : 
+                // Determine if item is included or excluded
+                const isIncluded = item.visible !== false; // Default to true if not set
+                const rowClass = isIncluded ? 'included' : 'excluded';
+                
+                // Show $0 for excluded items, actual values for included
+                const displayEstimated = isIncluded ? item.estimated : 0;
+                const displayActual = isIncluded ? item.actual : 0;
+                const displayVariance = isIncluded ? item.variance : 0;
+                const displayVariancePct = isIncluded ? item.variancePct : 0;
+                
+                const varianceClass = displayVariancePct < -2 ? 'variance-positive' : 
+                                     displayVariancePct > 2 ? 'variance-negative' : 
                                      'variance-neutral';
 
                 // Calculate budget percentage
-                const budgetPercent = totalBudget > 0 ? (item.estimated / totalBudget * 100) : 0;
+                const budgetPercent = totalBudget > 0 ? (displayEstimated / totalBudget * 100) : 0;
                 const barWidth = Math.min(budgetPercent * 2, 100); // Scale for visual display
                 
                 // Format last update
@@ -1449,21 +1495,24 @@
                 }) : 'N/A';
 
                 return `
-                    <tr class="${item.visible ? '' : 'hidden-row'}">
+                    <tr class="${rowClass}">
                         <td>
                             <span class="visibility-toggle" onclick="toggleLineItem('${item.id}')">
-                                ${item.visible ? '👁️' : '👁️‍🗨️'}
+                                ${isIncluded ? '👁️' : '👁️‍🗨️'}
                             </span>
                         </td>
-                        <td><strong>${item.name}</strong></td>
-                        <td class="number editable" onclick="editCell(this, '${item.id}', 'estimated')">${formatCurrency(item.estimated)}</td>
+                        <td class="item-name">
+                            <strong>${item.name}</strong>
+                            ${!isIncluded ? '<span class="excluded-label">(Excluded)</span>' : ''}
+                        </td>
+                        <td class="number amount editable" onclick="editCell(this, '${item.id}', 'estimated')">${formatCurrency(displayEstimated)}</td>
                         <td class="budget-percent-cell">
                             ${budgetPercent.toFixed(1)}%
-                            <span class="budget-percent-bar" style="width: ${barWidth}px"></span>
+                            ${isIncluded && barWidth > 0 ? `<span class="budget-percent-bar" style="width: ${barWidth}px"></span>` : ''}
                         </td>
-                        <td class="number editable" onclick="editCell(this, '${item.id}', 'actual')">${formatCurrency(item.actual)}</td>
-                        <td class="number ${varianceClass}">${formatCurrency(item.variance)}</td>
-                        <td class="number ${varianceClass}">${formatPercent(item.variancePct)}</td>
+                        <td class="number amount editable" onclick="editCell(this, '${item.id}', 'actual')">${formatCurrency(displayActual)}</td>
+                        <td class="number amount ${varianceClass}">${formatCurrency(displayVariance)}</td>
+                        <td class="number amount ${varianceClass}">${formatPercent(displayVariancePct)}</td>
                         <td style="font-size: 12px; color: var(--alpine-gray);">${lastUpdate}</td>
                         <td class="notes-cell editable" onclick="editNotes(this, '${item.id}')">${item.notes || '<em style="color: var(--alpine-light-gray);">📝 Add notes...</em>'}</td>
                     </tr>
@@ -1475,33 +1524,31 @@
             const hardCosts = project.costs.filter(item => item.category === 'hard');
             const softCosts = project.costs.filter(item => item.category === 'soft');
             
-            // Calculate visible items
-            const visibleHardCosts = hardCosts.filter(item => item.visible);
-            const visibleSoftCosts = softCosts.filter(item => item.visible);
+            // Calculate visible/included items only (item.visible !== false)
+            const visibleHardCosts = hardCosts.filter(item => item.visible !== false);
+            const visibleSoftCosts = softCosts.filter(item => item.visible !== false);
 
-            const hardEstimated = hardCosts.reduce((sum, item) => sum + item.estimated, 0);
-            const hardActual = hardCosts.reduce((sum, item) => sum + item.actual, 0);
+            // Hard costs - only include visible items
+            const hardEstimated = visibleHardCosts.reduce((sum, item) => sum + item.estimated, 0);
+            const hardActual = visibleHardCosts.reduce((sum, item) => sum + item.actual, 0);
             const hardVariance = hardActual - hardEstimated;
             const hardVariancePct = hardEstimated !== 0 ? (hardVariance / hardEstimated) * 100 : 0;
             
-            const visibleHardEstimated = visibleHardCosts.reduce((sum, item) => sum + item.estimated, 0);
-            const visibleHardActual = visibleHardCosts.reduce((sum, item) => sum + item.actual, 0);
-
-            const softEstimated = softCosts.reduce((sum, item) => sum + item.estimated, 0);
-            const softActual = softCosts.reduce((sum, item) => sum + item.actual, 0);
+            // Soft costs - only include visible items
+            const softEstimated = visibleSoftCosts.reduce((sum, item) => sum + item.estimated, 0);
+            const softActual = visibleSoftCosts.reduce((sum, item) => sum + item.actual, 0);
             const softVariance = softActual - softEstimated;
             const softVariancePct = softEstimated !== 0 ? (softVariance / softEstimated) * 100 : 0;
-            
-            const visibleSoftEstimated = visibleSoftCosts.reduce((sum, item) => sum + item.estimated, 0);
-            const visibleSoftActual = visibleSoftCosts.reduce((sum, item) => sum + item.actual, 0);
 
+            // Grand total - only include visible items
             const totalEstimated = hardEstimated + softEstimated;
             const totalActual = hardActual + softActual;
             const totalVariance = totalActual - totalEstimated;
             const totalVariancePct = totalEstimated !== 0 ? (totalVariance / totalEstimated) * 100 : 0;
             
-            const visibleTotalEstimated = visibleHardEstimated + visibleSoftEstimated;
-            const visibleTotalActual = visibleHardActual + visibleSoftActual;
+            // Count excluded items
+            const excludedCount = hardCosts.filter(item => item.visible === false).length + 
+                                  softCosts.filter(item => item.visible === false).length;
 
             const hardVarianceClass = hardVariancePct < -2 ? 'variance-positive' : hardVariancePct > 2 ? 'variance-negative' : 'variance-neutral';
             const softVarianceClass = softVariancePct < -2 ? 'variance-positive' : softVariancePct > 2 ? 'variance-negative' : 'variance-neutral';
@@ -1509,10 +1556,12 @@
             
             const totalBudget = totalEstimated;
 
+            const totalBudget = totalEstimated;
+            
             document.getElementById('totals-tbody').innerHTML = `
                 <tr class="totals-row">
                     <td></td>
-                    <td>HARD COSTS TOTAL</td>
+                    <td>HARD COSTS TOTAL (${visibleHardCosts.length} included)</td>
                     <td class="number">${formatCurrency(hardEstimated)}</td>
                     <td class="budget-percent-cell">${totalBudget > 0 ? (hardEstimated / totalBudget * 100).toFixed(1) : 0}%</td>
                     <td class="number">${formatCurrency(hardActual)}</td>
@@ -1523,7 +1572,7 @@
                 </tr>
                 <tr class="totals-row">
                     <td></td>
-                    <td>SOFT COSTS TOTAL</td>
+                    <td>SOFT COSTS TOTAL (${visibleSoftCosts.length} included)</td>
                     <td class="number">${formatCurrency(softEstimated)}</td>
                     <td class="budget-percent-cell">${totalBudget > 0 ? (softEstimated / totalBudget * 100).toFixed(1) : 0}%</td>
                     <td class="number">${formatCurrency(softActual)}</td>
@@ -1534,7 +1583,7 @@
                 </tr>
                 <tr class="totals-row" style="background: var(--alpine-dark); color: white;">
                     <td></td>
-                    <td>GRAND TOTAL (All Items)</td>
+                    <td>GRAND TOTAL${excludedCount > 0 ? ` (${excludedCount} excluded)` : ''}</td>
                     <td class="number">${formatCurrency(totalEstimated)}</td>
                     <td class="budget-percent-cell">100.0%</td>
                     <td class="number">${formatCurrency(totalActual)}</td>
@@ -1543,19 +1592,6 @@
                     <td></td>
                     <td></td>
                 </tr>
-                ${visibleTotalEstimated !== totalEstimated ? `
-                <tr class="totals-row" style="background: var(--alpine-medium); color: white;">
-                    <td></td>
-                    <td>VISIBLE ITEMS TOTAL (${visibleHardCosts.length + visibleSoftCosts.length} items)</td>
-                    <td class="number">${formatCurrency(visibleTotalEstimated)}</td>
-                    <td class="budget-percent-cell">${totalBudget > 0 ? (visibleTotalEstimated / totalBudget * 100).toFixed(1) : 0}%</td>
-                    <td class="number">${formatCurrency(visibleTotalActual)}</td>
-                    <td class="number">${formatCurrency(visibleTotalActual - visibleTotalEstimated)}</td>
-                    <td class="number">${formatPercent(visibleTotalEstimated !== 0 ? ((visibleTotalActual - visibleTotalEstimated) / visibleTotalEstimated) * 100 : 0)}</td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                ` : ''}
             `;
         }
 
@@ -1571,10 +1607,20 @@
         // Toggle all line items
         function toggleAllLineItems() {
             const project = appData.projects.find(p => p.id === currentProjectId);
-            const allVisible = project.costs.every(item => item.visible);
+            const allVisible = project.costs.every(item => item.visible !== false);
             project.costs.forEach(item => item.visible = !allVisible);
             saveData();
             showProjectDetail(currentProjectId);
+        }
+
+        // Toggle excluded items visibility (show/hide them completely)
+        function toggleExcludedVisibility() {
+            const checkbox = document.getElementById('showExcludedItems');
+            if (checkbox.checked) {
+                document.body.classList.remove('hide-excluded');
+            } else {
+                document.body.classList.add('hide-excluded');
+            }
         }
 
         // Edit cell
