@@ -824,9 +824,14 @@
                     <div class="back-button" onclick="showProjectsScreen()">
                         ← Back to Projects
                     </div>
-                    <button class="btn btn-small btn-secondary" onclick="openShareModal()">
-                        🔗 Share Project
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-small btn-secondary" onclick="openEditProjectModal()">
+                            ✏️ Edit Details
+                        </button>
+                        <button class="btn btn-small btn-secondary" onclick="openShareModal()">
+                            🔗 Share Project
+                        </button>
+                    </div>
                 </div>
                 <div class="project-detail-title" id="detail-project-name"></div>
                 <div id="detail-project-address" class="project-address"></div>
@@ -932,8 +937,17 @@
                         <input type="number" class="form-input" id="new-project-units" value="2">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Square Feet</label>
-                        <input type="number" class="form-input" id="new-project-sqft" value="4000">
+                        <label class="form-label">Gross Square Feet</label>
+                        <input type="number" class="form-input" id="new-project-gross-sqft" value="4000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Sellable Square Feet</label>
+                        <input type="number" class="form-input" id="new-project-sellable-sqft" value="3500">
+                    </div>
+                    <div class="form-group">
+                        <!-- Empty spacer for layout -->
                     </div>
                 </div>
                 <div class="form-group">
@@ -1032,6 +1046,58 @@
                 <button type="button" class="btn btn-secondary" onclick="closeShareModal()">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="saveSharing()">Save Changes</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Project Details Modal -->
+    <div id="edit-project-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Edit Project Details</div>
+            <form id="edit-project-form">
+                <div class="form-group">
+                    <label class="form-label">Project Name *</label>
+                    <input type="text" class="form-input" id="edit-project-name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-input" id="edit-project-address">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Units</label>
+                        <input type="number" class="form-input" id="edit-project-units">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Gross Square Feet</label>
+                        <input type="number" class="form-input" id="edit-project-gross-sqft">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Sellable Square Feet</label>
+                        <input type="number" class="form-input" id="edit-project-sellable-sqft">
+                    </div>
+                    <div class="form-group">
+                        <!-- Empty spacer -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-input" id="edit-project-date">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-input" id="edit-project-status">
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="archived">Archived</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('edit-project-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1377,6 +1443,7 @@
             // Form handlers
             document.getElementById('new-project-form').addEventListener('submit', handleNewProject);
             document.getElementById('add-lineitem-form').addEventListener('submit', handleAddLineItem);
+            document.getElementById('edit-project-form').addEventListener('submit', handleEditProject);
             
             // Setup Firebase auth listener (waits for Firebase SDK to load)
             setupFirebaseAuth();
@@ -1590,7 +1657,9 @@
             // Update meta
             const totalEstimated = project.costs.reduce((sum, item) => sum + item.estimated, 0);
             const totalActual = project.costs.reduce((sum, item) => sum + item.actual, 0);
-            const costPerSqft = project.sqft > 0 ? totalEstimated / project.sqft : 0;
+            // Use grossSqft if available, fallback to sqft for old projects
+            const sqftForCalc = project.grossSqft || project.sqft || 0;
+            const costPerSqft = sqftForCalc > 0 ? totalEstimated / sqftForCalc : 0;
 
             document.getElementById('detail-project-meta').innerHTML = `
                 <div class="meta-item">
@@ -1610,8 +1679,12 @@
                     <div class="meta-value">${project.units}</div>
                 </div>
                 <div class="meta-item">
-                    <div class="meta-label">Square Feet</div>
-                    <div class="meta-value">${project.sqft.toLocaleString()}</div>
+                    <div class="meta-label">Gross Square Feet</div>
+                    <div class="meta-value">${(project.grossSqft || project.sqft || 0).toLocaleString()}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Sellable Square Feet</div>
+                    <div class="meta-value">${(project.sellableSqft || 0).toLocaleString()}</div>
                 </div>
                 <div class="meta-item">
                     <div class="meta-label">Status</div>
@@ -2108,7 +2181,8 @@
                 address: document.getElementById('new-project-address').value,
                 type: 'ground-up-condo',
                 units: parseInt(document.getElementById('new-project-units').value) || 2,
-                sqft: parseInt(document.getElementById('new-project-sqft').value) || 4000,
+                grossSqft: parseInt(document.getElementById('new-project-gross-sqft').value) || 4000,
+                sellableSqft: parseInt(document.getElementById('new-project-sellable-sqft').value) || 3500,
                 status: document.getElementById('new-project-status').value,
                 startDate: document.getElementById('new-project-date').value,
                 costs: createDefaultLineItems()
@@ -2496,6 +2570,59 @@
             
             await shareProject(currentProjectId, permissions);
             closeShareModal();
+        }
+
+        // Open edit project modal
+        function openEditProjectModal() {
+            const project = appData.projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            
+            // Populate form with current project data
+            document.getElementById('edit-project-name').value = project.name || '';
+            document.getElementById('edit-project-address').value = project.address || '';
+            document.getElementById('edit-project-units').value = project.units || 2;
+            document.getElementById('edit-project-gross-sqft').value = project.grossSqft || project.sqft || 4000;
+            document.getElementById('edit-project-sellable-sqft').value = project.sellableSqft || 0;
+            document.getElementById('edit-project-date').value = project.startDate || '';
+            document.getElementById('edit-project-status').value = project.status || 'active';
+            
+            document.getElementById('edit-project-modal').classList.add('active');
+        }
+
+        // Handle edit project form submission
+        async function handleEditProject(e) {
+            e.preventDefault();
+            
+            const project = appData.projects.find(p => p.id === currentProjectId);
+            if (!project) return;
+            
+            // Update project data
+            project.name = document.getElementById('edit-project-name').value;
+            project.address = document.getElementById('edit-project-address').value;
+            project.units = parseInt(document.getElementById('edit-project-units').value) || 2;
+            project.grossSqft = parseInt(document.getElementById('edit-project-gross-sqft').value) || 4000;
+            project.sellableSqft = parseInt(document.getElementById('edit-project-sellable-sqft').value) || 0;
+            project.startDate = document.getElementById('edit-project-date').value;
+            project.status = document.getElementById('edit-project-status').value;
+            
+            // Save to Firebase if authenticated
+            if (window.auth && window.auth.currentUser) {
+                try {
+                    await saveProjectToFirebase(project);
+                    await loadUserProjects();
+                } catch (error) {
+                    console.error('Error saving project:', error);
+                    alert('Error saving project changes');
+                    return;
+                }
+            } else {
+                // Save to localStorage
+                saveData();
+            }
+            
+            // Close modal and refresh display
+            closeModal('edit-project-modal');
+            openProject(currentProjectId);
         }
     </script>
 </body>
