@@ -1628,8 +1628,8 @@
                             <span class="status-badge status-${project.status}">${project.status}</span>
                         </div>
                         <div class="project-meta">
-                            <span>📐 ${project.units} units</span>
-                            <span>📏 ${project.sqft.toLocaleString()} sqft</span>
+                            <span>📐 ${project.units || 0} units</span>
+                            <span>📏 ${(project.grossSqft || project.sqft || 0).toLocaleString()} sqft</span>
                             <span>📅 ${new Date(project.startDate).toLocaleDateString()}</span>
                         </div>
                         <div class="project-budget">
