@@ -448,6 +448,17 @@
     // Add logout button when page loads
     window.addEventListener('DOMContentLoaded', () => {
       addLogoutButton();
+      
+      // Ensure tool cards are clickable (force navigation)
+      document.querySelectorAll('.tool-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+          e.preventDefault();
+          const href = this.getAttribute('href');
+          if (href) {
+            window.location.href = href;
+          }
+        });
+      });
     });
   </script>
 </body>
