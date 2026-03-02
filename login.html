@@ -11,7 +11,7 @@
     :root {
       /* Black, White, Grey Color Palette */
       --black: #000000;
-      --grey-900: #1A1A1A;
+      --grey-900: #333333;
       --grey-800: #2D3748;
       --grey-700: #4A5568;
       --grey-600: #64748B;
@@ -64,16 +64,22 @@
     }
 
     .login-logo {
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       background: var(--white);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 16px;
-      font-size: 32px;
+      padding: 8px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     .login-header h1 {
@@ -227,7 +233,7 @@
 <body>
   <div class="login-container">
     <div class="login-header">
-      <div class="login-logo">🏔️</div>
+      <div class="login-logo"><img src="assets/alpine-logo.png" alt="Alpine Property Group"></div>
       <h1>Alpine Property Group</h1>
       <p>Development Toolkit Access</p>
     </div>
