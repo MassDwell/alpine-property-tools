@@ -2045,14 +2045,35 @@
         }
 
         // Delete project
-        function deleteProject() {
+        async function deleteProject() {
             if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) {
                 return;
             }
 
-            appData.projects = appData.projects.filter(p => p.id !== currentProjectId);
-            saveData();
-            showProjectsScreen();
+            try {
+                // Find the project
+                const project = appData.projects.find(p => p.id === currentProjectId);
+                
+                if (window.auth && window.db && project) {
+                    const email = window.auth.currentUser.email;
+                    
+                    if (project.type === 'shared') {
+                        // Delete shared project
+                        await window.db.collection('shared_projects').doc(project.id).delete();
+                    } else {
+                        // Delete personal project
+                        await window.db.collection('users').doc(email).collection('personal_projects').doc(project.id).delete();
+                    }
+                }
+                
+                // Remove from local state
+                appData.projects = appData.projects.filter(p => p.id !== currentProjectId);
+                saveData();
+                showProjectsScreen();
+            } catch (error) {
+                console.error('Error deleting project:', error);
+                alert('Error deleting project. Please try again.');
+            }
         }
 
         // Show projects screen
