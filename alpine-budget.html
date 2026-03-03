@@ -224,6 +224,24 @@
 <body>
   <div id="root"></div>
 
+  <script>
+    // POPULATE SUMNER STREET 191 - Must run before React loads
+    (function(){
+      const now = new Date().toISOString();
+      const sumnerProject = {id:'project-sumner-191',name:'191 Sumner Street, Newton',units:16,grossSF:35020,sellableSF:26300,createdAt:now,updatedAt:now};
+      const lineItems = [
+        ['HARD COSTS',63058,'Landscaping and irrigation'],['HARD COSTS',118588,'Footings'],['HARD COSTS',468742,'Structural steel'],['HARD COSTS',898062,'Wood framing'],['HARD COSTS',233882,'Insulation'],['HARD COSTS',736349,'Masonry/brick/stone'],['HARD COSTS',242871,'Windows'],['HARD COSTS',242668,'Roof structure'],['HARD COSTS',457411,'Heating systems'],['HARD COSTS',188235,'Plumbing fixtures'],['HARD COSTS',178113,'Sprinklers'],['HARD COSTS',603225,'Main electrical service'],['HARD COSTS',17411,'Fire alarm systems'],['HARD COSTS',113189,'Elevator equipment'],['HARD COSTS',416470,'Drywall'],['HARD COSTS',87470,'Fire-rated assemblies'],['HARD COSTS',127529,'Doors and hardware'],['HARD COSTS',144877,'Trim and millwork'],['HARD COSTS',100841,'Paint'],['HARD COSTS',422588,'Flooring'],['HARD COSTS',661300,'Cabinets'],['HARD COSTS',90823,'Countertops'],['HARD COSTS',4752,'Mirrors/accessories'],['HARD COSTS',1411,'Bike storage'],['HARD COSTS',408470,'Contractor overhead'],['HARD COSTS',12313,'Dumpsters'],['HARD COSTS',604955,'Sitework/Shoring'],['HARD COSTS',517647,'Sitework Payment to Ron'],['HARD COSTS',401340,'Wood Framing Labor'],['HARD COSTS',40470,'Winter Conditions'],['HARD COSTS',7058,'EV Charging Stations'],['HARD COSTS',438369,'Plumbing Rough+Finish'],['HARD COSTS',80000,'Closet Systems'],['HARD COSTS',514868,'Appliances'],['HARD COSTS',25882,'Electrical Fixtures'],['HARD COSTS',4517,'Postal Specialties'],['HARD COSTS',9411,'Final Cleaning'],['HARD COSTS',9406,'Garage Doors'],['HARD COSTS',47058,'Alpine Property Overhead'],['HARD COSTS',23529,'FF&E'],['SOFT COSTS',195294,'Architectural design']
+      ];
+      let p=JSON.parse(localStorage.getItem('alpine_projects')||'[]');
+      let b=JSON.parse(localStorage.getItem('alpine_budgets')||'[]');
+      if(!p.find(x=>x.id==='project-sumner-191')){p.push(sumnerProject);}
+      lineItems.forEach((item,idx)=>{b.push({id:'sumner_'+idx,projectId:'project-sumner-191',category:item[0],budgeted:item[1],actual:0,notes:item[2],createdAt:now});});
+      localStorage.setItem('alpine_projects',JSON.stringify(p));
+      localStorage.setItem('alpine_budgets',JSON.stringify(b));
+      console.log('✅ Sumner Street 191: '+lineItems.length+' line items, $'+lineItems.reduce((s,i)=>s+i[1],0).toLocaleString());
+    })();
+  </script>
+
   <script type="text/babel">
     const { useState, useEffect } = React;
 
@@ -247,6 +265,8 @@
       const [budgets, setBudgets] = useState([]);
       const [showModal, setShowModal] = useState(false);
       const [editingBudget, setEditingBudget] = useState(null);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [pendingChanges, setPendingChanges] = useState({});
 
       useEffect(() => {
         loadData();
@@ -262,6 +282,10 @@
       };
 
       const currentBudgets = budgets.filter(b => b.projectId === selectedProjectId);
+      
+      const filteredBudgets = currentBudgets.filter(b =>
+        b.category.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
       const totalBudget = currentBudgets.reduce((sum, b) => sum + (parseFloat(b.budgeted) || 0), 0);
       const totalActual = currentBudgets.reduce((sum, b) => sum + (parseFloat(b.actual) || 0), 0);
@@ -270,22 +294,29 @@
 
       const handleAddBudget = () => {
         setEditingBudget(null);
+        setPendingChanges({});
         setShowModal(true);
       };
 
       const handleEditBudget = (budget) => {
         setEditingBudget(budget);
+        setPendingChanges({ ...budget });
         setShowModal(true);
       };
 
-      const handleSaveBudget = (budgetData) => {
+      const handleUpdateField = (fieldName, value) => {
+        setPendingChanges(prev => ({ ...prev, [fieldName]: value }));
+      };
+
+      const handleSaveAll = () => {
         if (editingBudget) {
-          AlpineData.updateBudget(editingBudget.id, budgetData);
+          AlpineData.updateBudget(editingBudget.id, pendingChanges);
         } else {
-          AlpineData.addBudget({ ...budgetData, projectId: selectedProjectId });
+          AlpineData.addBudget({ ...pendingChanges, projectId: selectedProjectId });
         }
         loadData();
         setShowModal(false);
+        setPendingChanges({});
       };
 
       const handleDeleteBudget = (budgetId) => {
@@ -296,29 +327,111 @@
         }
       };
 
+      const [showScalingModal, setShowScalingModal] = useState(false);
+      const [showProjectModal, setShowProjectModal] = useState(false);
+      const [projectFormData, setProjectFormData] = useState({
+        name: '',
+        units: '',
+        grossSF: '',
+        sellableSF: ''
+      });
+
+      const handleEditProjectSpecs = () => {
+        const project = projects.find(p => p.id === selectedProjectId);
+        if (project) {
+          setProjectFormData({
+            name: project.name || '',
+            units: project.units || '',
+            grossSF: project.grossSF || '',
+            sellableSF: project.sellableSF || ''
+          });
+          setShowProjectModal(true);
+        }
+      };
+
+      const handleSaveProjectSpecs = () => {
+        if (selectedProjectId) {
+          AlpineData.updateProject(selectedProjectId, {
+            name: projectFormData.name,
+            units: parseInt(projectFormData.units) || 0,
+            grossSF: parseInt(projectFormData.grossSF) || 0,
+            sellableSF: parseInt(projectFormData.sellableSF) || 0
+          });
+          loadData();
+          setShowProjectModal(false);
+        }
+      };
+
+      const handleScaleFromTemplate = (templateProjectId, newSpecs) => {
+        const result = AlpineData.scaleBudgetFromTemplate(templateProjectId, newSpecs);
+        
+        if (result) {
+          // Apply scaled budgets to current project
+          result.scaledBudgets.forEach(budget => {
+            AlpineData.addBudget({
+              ...budget,
+              projectId: selectedProjectId
+            });
+          });
+          loadData();
+          setShowScalingModal(false);
+          alert(`✅ Budget scaled from ${result.refProject.name}! ${result.scaledBudgets.length} items added.`);
+        }
+      };
+
       return (
         <div className="container">
           <div className="header">
             <h1>💰 Budget Tracker</h1>
             <div className="nav-buttons">
               <a href="index.html" className="btn btn-secondary">🏠 Home</a>
+              <button className="btn btn-secondary" onClick={() => setShowScalingModal(true)} disabled={!selectedProjectId} style={{ background: '#4f46e5', color: 'white' }}>
+                📋 Scale from Template
+              </button>
               <button className="btn btn-success" onClick={handleAddBudget} disabled={!selectedProjectId}>
                 + Add Budget Item
               </button>
             </div>
           </div>
 
-          <div className="project-selector">
+          <div className="project-selector" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <select
               value={selectedProjectId || ''}
               onChange={(e) => setSelectedProjectId(e.target.value)}
+              style={{ flex: 1 }}
             >
               <option value="">Select a project...</option>
               {projects.map(p => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
+            <button 
+              className="btn btn-secondary" 
+              onClick={handleEditProjectSpecs}
+              disabled={!selectedProjectId}
+              style={{ whiteSpace: 'nowrap', fontSize: '13px' }}
+            >
+              ⚙️ Project Details
+            </button>
           </div>
+
+          {selectedProjectId && (
+            <div className="project-selector" style={{ marginBottom: '10px' }}>
+              <input
+                type="text"
+                placeholder="🔍 Search line items... (e.g., 'Framing', 'Mechanical')"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+          )}
 
           {selectedProjectId && (
             <>
@@ -353,31 +466,37 @@
                   <div>Variance</div>
                   <div>%</div>
                 </div>
-                {currentBudgets.map(budget => {
-                  const budgeted = parseFloat(budget.budgeted) || 0;
-                  const actual = parseFloat(budget.actual) || 0;
-                  const variance = budgeted - actual;
-                  const percent = budgeted > 0 ? (variance / budgeted) : 0;
+                {filteredBudgets.length > 0 ? (
+                  filteredBudgets.map(budget => {
+                    const budgeted = parseFloat(budget.budgeted) || 0;
+                    const actual = parseFloat(budget.actual) || 0;
+                    const variance = budgeted - actual;
+                    const percent = budgeted > 0 ? (variance / budgeted) : 0;
 
-                  return (
-                    <div
-                      key={budget.id}
-                      className="budget-row"
-                      onClick={() => handleEditBudget(budget)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="category-name">{budget.category}</div>
-                      <div>{AlpineData.formatCurrency(budgeted)}</div>
-                      <div>{AlpineData.formatCurrency(actual)}</div>
-                      <div className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
-                        {AlpineData.formatCurrency(variance)}
+                    return (
+                      <div
+                        key={budget.id}
+                        className="budget-row"
+                        onClick={() => handleEditBudget(budget)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="category-name">{budget.category}</div>
+                        <div>{AlpineData.formatCurrency(budgeted)}</div>
+                        <div>{AlpineData.formatCurrency(actual)}</div>
+                        <div className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
+                          {AlpineData.formatCurrency(variance)}
+                        </div>
+                        <div className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
+                          {AlpineData.formatPercent(percent)}
+                        </div>
                       </div>
-                      <div className={`variance ${variance >= 0 ? 'positive' : 'negative'}`}>
-                        {AlpineData.formatPercent(percent)}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+                    {searchQuery ? 'No results found' : 'No budget items yet'}
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -385,77 +504,110 @@
           {showModal && (
             <BudgetModal
               budget={editingBudget}
-              onSave={handleSaveBudget}
+              pendingChanges={pendingChanges}
+              onUpdateField={handleUpdateField}
+              onSaveAll={handleSaveAll}
               onDelete={handleDeleteBudget}
-              onClose={() => setShowModal(false)}
+              onClose={() => { setShowModal(false); setPendingChanges({}); }}
+              isNew={!editingBudget}
+            />
+          )}
+
+          {showScalingModal && (
+            <ScalingModal
+              currentProjectId={selectedProjectId}
+              availableProjects={projects}
+              onApply={handleScaleFromTemplate}
+              onClose={() => setShowScalingModal(false)}
+            />
+          )}
+
+          {showProjectModal && (
+            <ProjectSpecsModal
+              projectData={projectFormData}
+              onUpdateField={(field, value) => setProjectFormData(prev => ({ ...prev, [field]: value }))}
+              onSave={handleSaveProjectSpecs}
+              onClose={() => setShowProjectModal(false)}
             />
           )}
         </div>
       );
     }
 
-    function BudgetModal({ budget, onSave, onDelete, onClose }) {
-      const [formData, setFormData] = useState({
-        category: budget?.category || '',
-        budgeted: budget?.budgeted || '',
-        actual: budget?.actual || '',
-        notes: budget?.notes || ''
-      });
-
-      const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-      };
-
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave(formData);
-      };
-
+    function BudgetModal({ budget, pendingChanges, onUpdateField, onSaveAll, onDelete, onClose, isNew }) {
       return (
         <div className="modal" onClick={onClose}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">{budget ? 'Edit Budget Item' : 'New Budget Item'}</div>
-            <form onSubmit={handleSubmit}>
+            <div className="modal-header" style={{ marginBottom: '10px' }}>
+              {isNew ? 'New Budget Item' : `Edit: ${pendingChanges.category}`}
+            </div>
+            {!isNew && (
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '20px', padding: '10px', background: '#f0f0f0', borderRadius: '6px' }}>
+                💡 Edit multiple fields below, then click "Save All" to commit changes
+              </div>
+            )}
+            <div>
               <div className="form-group">
                 <label>Category *</label>
-                {!budget ? (
-                  <select name="category" value={formData.category} onChange={handleChange} required>
+                {!isNew ? (
+                  <input 
+                    type="text" 
+                    value={pendingChanges.category || ''} 
+                    disabled 
+                    style={{ background: '#f0f0f0' }}
+                  />
+                ) : (
+                  <select 
+                    value={pendingChanges.category || ''} 
+                    onChange={(e) => onUpdateField('category', e.target.value)}
+                    required
+                  >
                     <option value="">Select category...</option>
                     {DEFAULT_CATEGORIES.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
-                ) : (
-                  <input type="text" value={formData.category} disabled />
                 )}
               </div>
+              
               <div className="form-group">
                 <label>Budgeted Amount ($) *</label>
                 <input
                   type="number"
-                  name="budgeted"
-                  value={formData.budgeted}
-                  onChange={handleChange}
+                  value={pendingChanges.budgeted || ''}
+                  onChange={(e) => onUpdateField('budgeted', e.target.value)}
                   required
+                  autoFocus={!isNew}
                 />
               </div>
+              
               <div className="form-group">
                 <label>Actual Amount ($)</label>
                 <input
                   type="number"
-                  name="actual"
-                  value={formData.actual}
-                  onChange={handleChange}
+                  value={pendingChanges.actual || ''}
+                  onChange={(e) => onUpdateField('actual', e.target.value)}
+                  autoFocus={isNew}
                 />
               </div>
-              <div className="form-actions">
-                {budget && (
+              
+              <div className="form-group">
+                <label>Notes</label>
+                <input
+                  type="text"
+                  value={pendingChanges.notes || ''}
+                  onChange={(e) => onUpdateField('notes', e.target.value)}
+                  placeholder="Optional notes..."
+                />
+              </div>
+              
+              <div className="form-actions" style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid #e0e0e0' }}>
+                {!isNew && (
                   <button 
                     type="button" 
                     className="btn btn-secondary" 
                     onClick={() => onDelete(budget.id)}
-                    style={{ marginRight: 'auto', background: '#dc2626' }}
+                    style={{ marginRight: 'auto', background: '#dc2626', color: 'white' }}
                   >
                     🗑️ Delete
                   </button>
@@ -463,11 +615,232 @@
                 <button type="button" className="btn btn-secondary" onClick={onClose}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Save
+                <button type="button" className="btn btn-success" onClick={onSaveAll}>
+                  ✓ Save All
                 </button>
               </div>
-            </form>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ProjectSpecsModal({ projectData, onUpdateField, onSave, onClose }) {
+      return (
+        <div className="modal" onClick={onClose}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">⚙️ Project Details & Specs</div>
+            
+            <div className="form-group">
+              <label>Project Name</label>
+              <input
+                type="text"
+                value={projectData.name}
+                onChange={(e) => onUpdateField('name', e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Number of Units/Condos</label>
+              <input
+                type="number"
+                value={projectData.units}
+                onChange={(e) => onUpdateField('units', e.target.value)}
+                placeholder="e.g., 34"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Gross Building Square Feet</label>
+              <input
+                type="number"
+                value={projectData.grossSF}
+                onChange={(e) => onUpdateField('grossSF', e.target.value)}
+                placeholder="e.g., 74424"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Sellable/Net Rentable Square Feet</label>
+              <input
+                type="number"
+                value={projectData.sellableSF}
+                onChange={(e) => onUpdateField('sellableSF', e.target.value)}
+                placeholder="e.g., 47543"
+              />
+            </div>
+
+            {projectData.units && projectData.grossSF && (
+              <div style={{ padding: '12px', background: '#f0f0f0', borderRadius: '6px', fontSize: '12px', marginBottom: '15px' }}>
+                <strong>Summary:</strong><br/>
+                Per Unit: {(parseInt(projectData.grossSF) / parseInt(projectData.units)).toFixed(0)} gross SF
+              </div>
+            )}
+
+            <div className="form-actions">
+              <button type="button" className="btn btn-secondary" onClick={onClose}>
+                Cancel
+              </button>
+              <button type="button" className="btn btn-primary" onClick={onSave}>
+                Save Details
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ScalingModal({ currentProjectId, availableProjects, onApply, onClose }) {
+      const [templateProjectId, setTemplateProjectId] = useState('');
+      const [newUnits, setNewUnits] = useState('');
+      const [newGrossSF, setNewGrossSF] = useState('');
+      const [newSellableSF, setNewSellableSF] = useState('');
+      const [preview, setPreview] = useState(null);
+
+      const templateProject = availableProjects.find(p => p.id === templateProjectId);
+
+      const handlePreview = () => {
+        if (!templateProjectId || !newUnits || !newGrossSF) {
+          alert('Please select a template and enter unit count + gross SF');
+          return;
+        }
+
+        const result = AlpineData.scaleBudgetFromTemplate(templateProjectId, {
+          units: parseInt(newUnits),
+          grossSF: parseInt(newGrossSF),
+          sellableSF: parseInt(newSellableSF) || 0
+        });
+
+        setPreview(result);
+      };
+
+      const handleApply = () => {
+        if (preview) {
+          onApply(templateProjectId, {
+            units: parseInt(newUnits),
+            grossSF: parseInt(newGrossSF),
+            sellableSF: parseInt(newSellableSF) || 0
+          });
+        }
+      };
+
+      return (
+        <div className="modal" onClick={onClose}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+            <div className="modal-header">📋 Scale Budget from Template</div>
+            
+            {!preview ? (
+              <div>
+                <div className="form-group">
+                  <label>Reference Project (Template) *</label>
+                  <select 
+                    value={templateProjectId} 
+                    onChange={(e) => { setTemplateProjectId(e.target.value); setPreview(null); }}
+                    required
+                  >
+                    <option value="">Select a reference project...</option>
+                    {availableProjects.filter(p => p.id !== currentProjectId).map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.units || '?'} units, {p.grossSF?.toLocaleString() || '?'} gross SF)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {templateProject && (
+                  <div style={{ padding: '15px', background: '#f0f0f0', borderRadius: '8px', marginBottom: '20px', fontSize: '13px' }}>
+                    <strong>Reference Project Specs:</strong><br/>
+                    Units: {templateProject.units || '?'} | Gross SF: {templateProject.grossSF?.toLocaleString() || '?'} | Sellable SF: {templateProject.sellableSF?.toLocaleString() || '?'}
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label>New Project Unit Count *</label>
+                  <input
+                    type="number"
+                    value={newUnits}
+                    onChange={(e) => setNewUnits(e.target.value)}
+                    placeholder="e.g., 16"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>New Project Gross Building SF *</label>
+                  <input
+                    type="number"
+                    value={newGrossSF}
+                    onChange={(e) => setNewGrossSF(e.target.value)}
+                    placeholder="e.g., 35000"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>New Project Sellable SF</label>
+                  <input
+                    type="number"
+                    value={newSellableSF}
+                    onChange={(e) => setNewSellableSF(e.target.value)}
+                    placeholder="e.g., 22000 (optional)"
+                  />
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="btn btn-secondary" onClick={onClose}>
+                    Cancel
+                  </button>
+                  <button type="button" className="btn btn-primary" onClick={handlePreview}>
+                    👁️ Preview Scaling
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ padding: '15px', background: '#e8f5e9', borderRadius: '8px', marginBottom: '20px', fontSize: '13px' }}>
+                  <strong>Scaling Factors:</strong><br/>
+                  By Units: {preview.scalingFactors.byUnits.toFixed(2)}x | By SF: {preview.scalingFactors.bySF.toFixed(2)}x
+                </div>
+
+                <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '20px' }}>
+                  <table style={{ width: '100%', fontSize: '13px', borderCollapse: 'collapse' }}>
+                    <thead style={{ background: '#f0f0f0', borderBottom: '2px solid #ddd' }}>
+                      <tr>
+                        <th style={{ padding: '8px', textAlign: 'left' }}>Category</th>
+                        <th style={{ padding: '8px', textAlign: 'right' }}>Reference</th>
+                        <th style={{ padding: '8px', textAlign: 'right' }}>Scaled</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.scaledBudgets.map((budget, idx) => {
+                        const refBudget = AlpineData.getBudgets().find(b => b.projectId === templateProjectId && b.category === budget.category);
+                        return (
+                          <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '8px' }}>{budget.category}</td>
+                            <td style={{ padding: '8px', textAlign: 'right' }}>{AlpineData.formatCurrency(refBudget?.budgeted || 0)}</td>
+                            <td style={{ padding: '8px', textAlign: 'right', fontWeight: '600', color: '#2D3748' }}>
+                              {AlpineData.formatCurrency(budget.budgeted)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="btn btn-secondary" onClick={() => setPreview(null)}>
+                    ← Back
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={onClose}>
+                    Cancel
+                  </button>
+                  <button type="button" className="btn btn-success" onClick={handleApply}>
+                    ✓ Apply Scaled Budget
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       );
