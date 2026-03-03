@@ -8,6 +8,20 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="alpine-shared.js"></script>
+  <script>
+    // POPULATE SUMNER STREET 191 - MUST RUN BEFORE REACT LOADS
+    (function(){
+      const now=new Date().toISOString();
+      const sumner={id:'project-sumner-191',name:'191 Sumner Street, Newton',units:16,grossSF:35020,sellableSF:26300,createdAt:now};
+      const items=[[63058,'Landscaping'],[118588,'Footings'],[468742,'Structural steel'],[898062,'Wood framing'],[233882,'Insulation'],[736349,'Masonry'],[242871,'Windows'],[242668,'Roof'],[457411,'Heating'],[188235,'Plumbing'],[178113,'Sprinklers'],[603225,'Electrical service'],[17411,'Fire alarm'],[113189,'Elevator'],[416470,'Drywall'],[87470,'Fire-rated'],[127529,'Doors'],[144877,'Trim'],[100841,'Paint'],[422588,'Flooring'],[661300,'Cabinets'],[90823,'Countertops'],[4752,'Mirrors'],[1411,'Bike storage'],[408470,'Overhead'],[12313,'Dumpsters'],[604955,'Sitework'],[517647,'Sitework Ron'],[401340,'Framing labor'],[40470,'Winter'],[7058,'EV charging'],[438369,'Plumbing'],[80000,'Closets'],[514868,'Appliances'],[25882,'Electrical fixtures'],[4517,'Postal'],[9411,'Cleaning'],[9406,'Garage doors'],[47058,'APG overhead'],[23529,'FF&E'],[195294,'Architectural design']];
+      let p=JSON.parse(localStorage.getItem('alpine_projects')||'[]');
+      let b=JSON.parse(localStorage.getItem('alpine_budgets')||'[]');
+      if(!p.find(x=>x.id==='project-sumner-191')){p.push(sumner);}
+      items.forEach((item,i)=>{b.push({id:'sumner_'+i,projectId:'project-sumner-191',category:i<40?'HARD COSTS':'SOFT COSTS',budgeted:item[0],actual:0,notes:item[1],createdAt:now});});
+      localStorage.setItem('alpine_projects',JSON.stringify(p));
+      localStorage.setItem('alpine_budgets',JSON.stringify(b));
+    })();
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -224,23 +238,7 @@
 <body>
   <div id="root"></div>
 
-  <script>
-    // POPULATE SUMNER STREET 191 - Must run before React loads
-    (function(){
-      const now = new Date().toISOString();
-      const sumnerProject = {id:'project-sumner-191',name:'191 Sumner Street, Newton',units:16,grossSF:35020,sellableSF:26300,createdAt:now,updatedAt:now};
-      const lineItems = [
-        ['HARD COSTS',63058,'Landscaping and irrigation'],['HARD COSTS',118588,'Footings'],['HARD COSTS',468742,'Structural steel'],['HARD COSTS',898062,'Wood framing'],['HARD COSTS',233882,'Insulation'],['HARD COSTS',736349,'Masonry/brick/stone'],['HARD COSTS',242871,'Windows'],['HARD COSTS',242668,'Roof structure'],['HARD COSTS',457411,'Heating systems'],['HARD COSTS',188235,'Plumbing fixtures'],['HARD COSTS',178113,'Sprinklers'],['HARD COSTS',603225,'Main electrical service'],['HARD COSTS',17411,'Fire alarm systems'],['HARD COSTS',113189,'Elevator equipment'],['HARD COSTS',416470,'Drywall'],['HARD COSTS',87470,'Fire-rated assemblies'],['HARD COSTS',127529,'Doors and hardware'],['HARD COSTS',144877,'Trim and millwork'],['HARD COSTS',100841,'Paint'],['HARD COSTS',422588,'Flooring'],['HARD COSTS',661300,'Cabinets'],['HARD COSTS',90823,'Countertops'],['HARD COSTS',4752,'Mirrors/accessories'],['HARD COSTS',1411,'Bike storage'],['HARD COSTS',408470,'Contractor overhead'],['HARD COSTS',12313,'Dumpsters'],['HARD COSTS',604955,'Sitework/Shoring'],['HARD COSTS',517647,'Sitework Payment to Ron'],['HARD COSTS',401340,'Wood Framing Labor'],['HARD COSTS',40470,'Winter Conditions'],['HARD COSTS',7058,'EV Charging Stations'],['HARD COSTS',438369,'Plumbing Rough+Finish'],['HARD COSTS',80000,'Closet Systems'],['HARD COSTS',514868,'Appliances'],['HARD COSTS',25882,'Electrical Fixtures'],['HARD COSTS',4517,'Postal Specialties'],['HARD COSTS',9411,'Final Cleaning'],['HARD COSTS',9406,'Garage Doors'],['HARD COSTS',47058,'Alpine Property Overhead'],['HARD COSTS',23529,'FF&E'],['SOFT COSTS',195294,'Architectural design']
-      ];
-      let p=JSON.parse(localStorage.getItem('alpine_projects')||'[]');
-      let b=JSON.parse(localStorage.getItem('alpine_budgets')||'[]');
-      if(!p.find(x=>x.id==='project-sumner-191')){p.push(sumnerProject);}
-      lineItems.forEach((item,idx)=>{b.push({id:'sumner_'+idx,projectId:'project-sumner-191',category:item[0],budgeted:item[1],actual:0,notes:item[2],createdAt:now});});
-      localStorage.setItem('alpine_projects',JSON.stringify(p));
-      localStorage.setItem('alpine_budgets',JSON.stringify(b));
-      console.log('✅ Sumner Street 191: '+lineItems.length+' line items, $'+lineItems.reduce((s,i)=>s+i[1],0).toLocaleString());
-    })();
-  </script>
+
 
   <script type="text/babel">
     const { useState, useEffect } = React;
