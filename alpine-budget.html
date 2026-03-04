@@ -16,8 +16,15 @@
       const items=[[63058,'Landscaping'],[118588,'Footings'],[468742,'Structural steel'],[898062,'Wood framing'],[233882,'Insulation'],[736349,'Masonry'],[242871,'Windows'],[242668,'Roof'],[457411,'Heating'],[188235,'Plumbing'],[178113,'Sprinklers'],[603225,'Electrical service'],[17411,'Fire alarm'],[113189,'Elevator'],[416470,'Drywall'],[87470,'Fire-rated'],[127529,'Doors'],[144877,'Trim'],[100841,'Paint'],[422588,'Flooring'],[661300,'Cabinets'],[90823,'Countertops'],[4752,'Mirrors'],[1411,'Bike storage'],[408470,'Overhead'],[12313,'Dumpsters'],[604955,'Sitework'],[517647,'Sitework Ron'],[401340,'Framing labor'],[40470,'Winter'],[7058,'EV charging'],[438369,'Plumbing'],[80000,'Closets'],[514868,'Appliances'],[25882,'Electrical fixtures'],[4517,'Postal'],[9411,'Cleaning'],[9406,'Garage doors'],[47058,'APG overhead'],[23529,'FF&E'],[195294,'Architectural design']];
       let p=JSON.parse(localStorage.getItem('alpine_projects')||'[]');
       let b=JSON.parse(localStorage.getItem('alpine_budgets')||'[]');
+      // Add project if it doesn't exist
       if(!p.find(x=>x.id==='project-sumner-191')){p.push(sumner);}
-      items.forEach((item,i)=>{b.push({id:'sumner_'+i,projectId:'project-sumner-191',category:i<40?'HARD COSTS':'SOFT COSTS',budgeted:item[0],actual:0,notes:item[1],createdAt:now});});
+      // Add budget items only if they don't already exist (prevent duplicates on reload)
+      items.forEach((item,i)=>{
+        const budgetId='sumner_'+i;
+        if(!b.find(x=>x.id===budgetId)){
+          b.push({id:budgetId,projectId:'project-sumner-191',category:i<40?'HARD COSTS':'SOFT COSTS',budgeted:item[0],actual:0,notes:item[1],createdAt:now});
+        }
+      });
       localStorage.setItem('alpine_projects',JSON.stringify(p));
       localStorage.setItem('alpine_budgets',JSON.stringify(b));
     })();
@@ -266,16 +273,21 @@
       const [searchQuery, setSearchQuery] = useState('');
       const [pendingChanges, setPendingChanges] = useState({});
 
+      // Load data on mount
       useEffect(() => {
         loadData();
       }, []);
 
+      // Auto-select first project when projects load
+      useEffect(() => {
+        if (projects.length > 0 && !selectedProjectId) {
+          setSelectedProjectId(projects[0].id);
+        }
+      }, [projects]);
+
       const loadData = () => {
         const projectData = AlpineData.getProjects();
         setProjects(projectData);
-        if (projectData.length > 0 && !selectedProjectId) {
-          setSelectedProjectId(projectData[0].id);
-        }
         setBudgets(AlpineData.getBudgets());
       };
 
@@ -844,7 +856,7 @@
       );
     }
 
-    ReactDOM.render(<App />, document.getElementById('root'));
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
   <!-- Authentication -->
   <script src="auth.js"></script>

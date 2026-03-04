@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Sumner Street 191 Data</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+    .section { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    h2 { color: #2D3748; }
+    pre { background: #f0f0f0; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    .success { color: #28a745; font-weight: bold; }
+    .error { color: #dc3545; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Sumner Street 191 Data Test</h1>
+  
+  <div class="section">
+    <h2>1. Clear localStorage (Fresh Start)</h2>
+    <button onclick="clearStorage()">Clear All Alpine Data</button>
+    <div id="clear-result"></div>
+  </div>
+
+  <div class="section">
+    <h2>2. Run Injection Script</h2>
+    <button onclick="runInjection()">Inject Sumner Data</button>
+    <div id="inject-result"></div>
+  </div>
+
+  <div class="section">
+    <h2>3. Verify Projects</h2>
+    <button onclick="checkProjects()">Check Projects</button>
+    <div id="projects-result"></div>
+  </div>
+
+  <div class="section">
+    <h2>4. Verify Budgets</h2>
+    <button onclick="checkBudgets()">Check Budgets</button>
+    <div id="budgets-result"></div>
+  </div>
+
+  <div class="section">
+    <h2>5. Test Duplicate Prevention</h2>
+    <button onclick="runInjectionTwice()">Run Injection Twice</button>
+    <div id="duplicate-result"></div>
+  </div>
+
+  <script>
+    function clearStorage() {
+      localStorage.removeItem('alpine_projects');
+      localStorage.removeItem('alpine_budgets');
+      document.getElementById('clear-result').innerHTML = '<p class="success">✅ localStorage cleared</p>';
+    }
+
+    function runInjection() {
+      // Same injection code as in alpine-budget.html
+      const now=new Date().toISOString();
+      const sumner={id:'project-sumner-191',name:'191 Sumner Street, Newton',units:16,grossSF:35020,sellableSF:26300,createdAt:now};
+      const items=[[63058,'Landscaping'],[118588,'Footings'],[468742,'Structural steel'],[898062,'Wood framing'],[233882,'Insulation'],[736349,'Masonry'],[242871,'Windows'],[242668,'Roof'],[457411,'Heating'],[188235,'Plumbing'],[178113,'Sprinklers'],[603225,'Electrical service'],[17411,'Fire alarm'],[113189,'Elevator'],[416470,'Drywall'],[87470,'Fire-rated'],[127529,'Doors'],[144877,'Trim'],[100841,'Paint'],[422588,'Flooring'],[661300,'Cabinets'],[90823,'Countertops'],[4752,'Mirrors'],[1411,'Bike storage'],[408470,'Overhead'],[12313,'Dumpsters'],[604955,'Sitework'],[517647,'Sitework Ron'],[401340,'Framing labor'],[40470,'Winter'],[7058,'EV charging'],[438369,'Plumbing'],[80000,'Closets'],[514868,'Appliances'],[25882,'Electrical fixtures'],[4517,'Postal'],[9411,'Cleaning'],[9406,'Garage doors'],[47058,'APG overhead'],[23529,'FF&E'],[195294,'Architectural design']];
+      let p=JSON.parse(localStorage.getItem('alpine_projects')||'[]');
+      let b=JSON.parse(localStorage.getItem('alpine_budgets')||'[]');
+      if(!p.find(x=>x.id==='project-sumner-191')){p.push(sumner);}
+      items.forEach((item,i)=>{
+        const budgetId='sumner_'+i;
+        if(!b.find(x=>x.id===budgetId)){
+          b.push({id:budgetId,projectId:'project-sumner-191',category:i<40?'HARD COSTS':'SOFT COSTS',budgeted:item[0],actual:0,notes:item[1],createdAt:now});
+        }
+      });
+      localStorage.setItem('alpine_projects',JSON.stringify(p));
+      localStorage.setItem('alpine_budgets',JSON.stringify(b));
+      
+      document.getElementById('inject-result').innerHTML = '<p class="success">✅ Injection complete!</p>';
+    }
+
+    function checkProjects() {
+      const projects = JSON.parse(localStorage.getItem('alpine_projects') || '[]');
+      const sumner = projects.find(p => p.id === 'project-sumner-191');
+      
+      let html = '<p><strong>Total projects:</strong> ' + projects.length + '</p>';
+      if (sumner) {
+        html += '<p class="success">✅ Sumner Street 191 found!</p>';
+        html += '<pre>' + JSON.stringify(sumner, null, 2) + '</pre>';
+      } else {
+        html += '<p class="error">❌ Sumner Street 191 NOT found!</p>';
+      }
+      
+      document.getElementById('projects-result').innerHTML = html;
+    }
+
+    function checkBudgets() {
+      const budgets = JSON.parse(localStorage.getItem('alpine_budgets') || '[]');
+      const sumnerBudgets = budgets.filter(b => b.projectId === 'project-sumner-191');
+      const totalBudget = sumnerBudgets.reduce((sum, b) => sum + (parseFloat(b.budgeted) || 0), 0);
+      
+      let html = '<p><strong>Total budget items:</strong> ' + budgets.length + '</p>';
+      html += '<p><strong>Sumner items:</strong> ' + sumnerBudgets.length + '</p>';
+      
+      if (sumnerBudgets.length === 41) {
+        html += '<p class="success">✅ Correct count (41 items)</p>';
+      } else {
+        html += '<p class="error">❌ Wrong count (expected 41, got ' + sumnerBudgets.length + ')</p>';
+      }
+      
+      html += '<p><strong>Total budget:</strong> $' + totalBudget.toLocaleString() + '</p>';
+      html += '<h3>Sample items:</h3>';
+      html += '<pre>' + JSON.stringify(sumnerBudgets.slice(0, 3), null, 2) + '</pre>';
+      
+      document.getElementById('budgets-result').innerHTML = html;
+    }
+
+    function runInjectionTwice() {
+      runInjection();
+      runInjection();
+      
+      const budgets = JSON.parse(localStorage.getItem('alpine_budgets') || '[]');
+      const sumnerBudgets = budgets.filter(b => b.projectId === 'project-sumner-191');
+      
+      let html = '<p>Ran injection script twice...</p>';
+      html += '<p><strong>Sumner budget items:</strong> ' + sumnerBudgets.length + '</p>';
+      
+      if (sumnerBudgets.length === 41) {
+        html += '<p class="success">✅ Duplicate prevention works! Still 41 items.</p>';
+      } else {
+        html += '<p class="error">❌ Duplicates created! Got ' + sumnerBudgets.length + ' items.</p>';
+      }
+      
+      document.getElementById('duplicate-result').innerHTML = html;
+    }
+  </script>
+</body>
+</html>
